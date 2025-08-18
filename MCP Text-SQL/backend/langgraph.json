@@ -1,0 +1,8 @@
+{
+  "dependencies": [
+    "."
+  ],
+  "graphs": {
+    "the_analyst": "app.agent.graph:builder"
+  }
+}

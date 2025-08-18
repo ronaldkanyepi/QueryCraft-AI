@@ -1,0 +1,98 @@
+[project]
+name = "mcp-text-sql"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "agentevals>=0.0.9",
+    "alembic>=1.16.4",
+    "asyncpg>=0.30.0",
+    "beautifulsoup4>=4.13.4",
+    "chainlit>=2.6.5",
+    "cryptography>=44.0.3",
+    "cx-oracle>=8.3.0",
+    "fastapi>=0.116.1",
+    "fastapi-zitadel-auth>=0.2.5",
+    "fastmcp>=2.11.0",
+    "fdb>=2.0.4",
+    "httpx>=0.28.1",
+    "langchain>=0.3.27",
+    "langchain-community>=0.3.27",
+    "langchain-core>=0.3.72",
+    "langchain-mcp-adapters>=0.1.9",
+    "langchain-openai>=0.3.28",
+    "langchain-postgres>=0.0.15",
+    "langchain-text-splitters>=0.3.9",
+    "langgraph>=0.6.3",
+    "langgraph-api>=0.2.125",
+    "langgraph-cli[inmem]>=0.3.6",
+    "langsmith>=0.4.10",
+    "logging>=0.4.9.6",
+    "loguru>=0.7.3",
+    "lxml>=6.0.0",
+    "mcp[cli]>=1.12.0",
+    "pandas>=2.3.1",
+    "pdfminer-six>=20250506",
+    "pillow>=11.3.0",
+    "plotly>=6.2.0",
+    "psycopg[binary]>=3.2.9",
+    "pydantic-settings>=2.10.1",
+    "pydantic[email]>=2.11.7",
+    "pymysql>=1.1.1",
+    "pyodbc>=5.2.0",
+    "pytest>=8.4.1",
+    "python-dotenv>=1.1.1",
+    "python-multipart>=0.0.18",
+    "redis>=6.3.0",
+    "requests>=2.32.4",
+    "rich>=14.0.0",
+    "slowapi>=0.1.9",
+    "sqlalchemy>=2.0.41",
+    "unstructured>=0.18.11",
+    "uvicorn>=0.35.0",
+    "watchfiles>=0.20.0",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.2.0",
+    "pyright>=1.1.403",
+    "ruff>=0.12.7",
+    "typos>=1.35.1",
+]
+
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+show-fixes = true
+unsafe-fixes = true
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length=100
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 100
+
+[tool.pyright]
+exclude = [
+    "**/tests/**",
+    "**/__pycache__",
+    "**/generated_code/*",
+    "**/.venv",
+    "**/migrations",
+    "**/alembic.ini"
+]
+
+[tool.typos.default.extend-words]
+teh ="teh"
