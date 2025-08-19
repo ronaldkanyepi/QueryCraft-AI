@@ -8,16 +8,13 @@ from langchain_community.document_loaders.parsers.txt import TextParser
 from langchain_core.documents.base import Blob, Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-
 # Document Parser Configuration
 HANDLERS = {
     "application/pdf": PDFMinerParser(),
     "text/plain": TextParser(),
     "text/html": BS4HTMLParser(),
     "application/msword": MsWordParser(),
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": (
-        MsWordParser()
-    ),
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": (MsWordParser()),
 }
 
 SUPPORTED_MIMETYPES = sorted(HANDLERS.keys())
@@ -31,9 +28,7 @@ MIMETYPE_BASED_PARSER = MimeTypeBasedParser(
 TEXT_SPLITTER = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 
 
-async def process_document(
-    file: UploadFile, metadata: dict | None = None
-) -> list[Document]:
+async def process_document(file: UploadFile, metadata: dict | None = None) -> list[Document]:
     file_id = uuid.uuid4()
 
     contents = await file.read()
@@ -47,17 +42,11 @@ async def process_document(
                 doc.metadata = {}
             doc.metadata.update(metadata)
 
-
     split_docs = TEXT_SPLITTER.split_documents(docs)
 
-
     for split_doc in split_docs:
-        if not hasattr(split_doc, "metadata") or not isinstance(
-            split_doc.metadata, dict
-        ):
+        if not hasattr(split_doc, "metadata") or not isinstance(split_doc.metadata, dict):
             split_doc.metadata = {}
-        split_doc.metadata["file_id"] = str(
-            file_id
-        )
+        split_doc.metadata["file_id"] = str(file_id)
 
     return split_docs

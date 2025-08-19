@@ -11,8 +11,7 @@ import {
     LucideBotMessageSquare,
     LucideChartCandlestick,
     Plus,
-    Send,
-    Timer,
+    Send
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -454,7 +453,7 @@ export default function IntegratedAIChat() {
                         />
                         <AIInputToolbar>
                             <AIInputTools><AIInputButton><Plus size={16} /></AIInputButton></AIInputTools>
-                            <Button type="submit" disabled={isStreaming || !text.trim()}>
+                            <Button type="submit" disabled={isStreaming || !text.trim()} className="p-1 m-1">
                                 {isStreaming ? (<Loader2 className="h-4 w-4 animate-spin" />) : (<Send className="h-4 w-4" />)}
                             </Button>
                         </AIInputToolbar>

@@ -1,4 +1,5 @@
 from typing import Any, NotRequired, TypedDict
+
 from pydantic import BaseModel, Field
 
 
@@ -28,19 +29,11 @@ class CollectionUpdate(BaseModel):
 
 
 class CollectionResponse(BaseModel):
-    """Schema for representing a collection from PGVector."""
-
-    # PGVector table has uuid (id), name (str), and cmetadata (JSONB)
-    # We get these from list/get db functions
-    uuid: str = Field(
-        ..., description="The unique identifier of the collection in PGVector."
-    )
+    uuid: str = Field(..., description="The unique identifier of the collection in PGVector.")
     name: str = Field(..., description="The name of the collection.")
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Metadata associated with the collection."
     )
 
     class Config:
-        # Allows creating model from dict like
-        # {'uuid': '...', 'name': '...', 'metadata': {...}}
         from_attributes = True

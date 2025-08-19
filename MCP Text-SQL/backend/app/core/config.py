@@ -1,35 +1,37 @@
 import sys
-from typing import Annotated, Literal
-from langchain_core.embeddings import DeterministicFakeEmbedding
-import sqlalchemy
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
 from pathlib import Path
+from typing import Annotated, Literal
+
+import sqlalchemy
+from langchain_core.embeddings import DeterministicFakeEmbedding, Embeddings
+from langchain_openai import OpenAIEmbeddings
 from pydantic import (
     AnyUrl,
     BeforeValidator,
     EmailStr,
+    SecretStr,
     ValidationError,
+    computed_field,
 )
 from pydantic_settings import BaseSettings
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+
 from app.core.constants import Defaults
-from pydantic import computed_field
-from langchain_core.embeddings import Embeddings
 
 env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+
+
 class Settings(BaseSettings):
     # === Author====
-    AUTHOR:str = Defaults.AUTHOR
-
+    AUTHOR: str = Defaults.AUTHOR
 
     # === App Metadata ===
     APP_NAME: str = Defaults.APP_NAME
     APP_VERSION: str = Defaults.APP_VERSION
     APP_DESCRIPTION: str = Defaults.APP_DESCRIPTION
-    APP_ENVIRONMENT: Literal["local", "staging", "production"] = (
-        Defaults.APP_ENVIRONMENT
-    )
+    APP_ENVIRONMENT: Literal["local", "staging", "production"] = Defaults.APP_ENVIRONMENT
     APP_FRONTEND_HOST: str = Defaults.APP_FRONTEND_HOST
     APP_HOST: str = Defaults.APP_HOST
     APP_PORT: int = Defaults.APP_PORT
@@ -46,7 +48,7 @@ class Settings(BaseSettings):
     DB_PORT: int = Defaults.DB_PORT
     DB_NAME: str = Defaults.DB_NAME
     DB_USER: str = Defaults.DB_USER
-    DB_PASSWORD: str = Defaults.DB_PASSWORD
+    DB_PASSWORD: SecretStr = Defaults.DB_PASSWORD
 
     # === Vector Database =====
     DEFAULT_COLLECTION_NAME: str = Defaults.DEFAULT_COLLECTION_NAME
@@ -74,38 +76,34 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_HOST: str | None = None
     SMTP_USER: str | None = None
-    SMTP_PASSWORD: str | None = None
+    SMTP_PASSWORD: SecretStr | None = None
     EMAILS_FROM_EMAIL: EmailStr | None = None
     EMAILS_FROM_NAME: str | None = Defaults.APP_NAME
 
     # === Logging ===
-    LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = (
-        Defaults.LOG_LEVEL
-    )
+    LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Defaults.LOG_LEVEL
     LOG_DIR: Path | None = Defaults.LOG_DIR
     LOG_JSON: bool = Defaults.LOG_JSON
     LOG_TO_FILE: bool = Defaults.LOG_TO_FILE
 
     # === Model ====
-    OPENAI_API_KEY:str = "sk-...."
-    OPENAI_MODEL_NAME:str = "gpt-4o"
-    OPENAI_TEMPERATURE:float = 0.1
+    OPENAI_API_KEY: SecretStr = "sk-...."  # pragma: allowlist secret
+    OPENAI_MODEL_NAME: str = "gpt-4o"
+    OPENAI_TEMPERATURE: float = 0.1
 
     # === Redis ===
     REDIS_URI: str = Defaults.REDIS_URI
 
     # =========MCP=========
-    MCP_SERVER_HOST:str = Defaults.MCP_SERVER_HOST
-    MCP_SERVER_PORT:int = Defaults.MCP_SERVER_PORT
-    MCP_SERVER_NAME:str = Defaults.MCP_SERVER_NAME
-    MCP_SERVER_TRANSPORT: Literal["streamable_http"] = (
-        Defaults.MCP_SERVER_TRANSPORT
-    )
+    MCP_SERVER_HOST: str = Defaults.MCP_SERVER_HOST
+    MCP_SERVER_PORT: int = Defaults.MCP_SERVER_PORT
+    MCP_SERVER_NAME: str = Defaults.MCP_SERVER_NAME
+    MCP_SERVER_TRANSPORT: Literal["streamable_http"] = Defaults.MCP_SERVER_TRANSPORT
 
     # =======Tracing & Evaluation========
-    LANGSMITH_API_KEY:str = Defaults.LANGSMITH_API_KEY
-    LANGSMITH_TRACING:bool = Defaults.LANGSMITH_TRACING
-    LANGSMITH_PROJECT:str = Defaults.LANGSMITH_PROJECT
+    LANGSMITH_API_KEY: SecretStr = Defaults.LANGSMITH_API_KEY
+    LANGSMITH_TRACING: bool = Defaults.LANGSMITH_TRACING
+    LANGSMITH_PROJECT: str = Defaults.LANGSMITH_PROJECT
 
     @property
     def docs_enabled(self) -> bool:
@@ -139,6 +137,8 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def DEFAULT_EMBEDDINGS(self) -> Embeddings:
+        if self.APP_ENVIRONMENT == "production":
+            return OpenAIEmbeddings(api_key=self.OPENAI_API_KEY, model=self.OPENAI_MODEL_NAME)
         return DeterministicFakeEmbedding(size=1536)
 
     model_config = {"env_file": env_path, "case_sensitive": True}
@@ -201,7 +201,9 @@ class StartupChecker:
             with engine.connect():
                 pass
         except Exception as e:
-            error_message = f"[bold red]🛑 Database Connection Failed[/bold red]\n\n[yellow]Error:[/yellow] {e}"
+            error_message = (
+                f"[bold red]🛑 Database Connection Failed[/bold red]\n\n[yellow]Error:[/yellow] {e}"
+            )
             self.console.print(
                 Panel(
                     error_message,

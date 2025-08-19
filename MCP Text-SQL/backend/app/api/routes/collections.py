@@ -1,5 +1,7 @@
 from uuid import UUID
+
 from fastapi import APIRouter, HTTPException, status
+
 from app.schemas import CollectionCreate, CollectionResponse, CollectionUpdate
 from app.services.embbedings import CollectionsManager
 
@@ -16,7 +18,6 @@ user = "default_user"
 async def collections_create(
     collection_data: CollectionCreate,
 ):
-    """Creates a new PGVector collection by name with optional metadata."""
     collection_info = await CollectionsManager(user).create(
         collection_data.name, collection_data.metadata
     )
@@ -27,13 +28,11 @@ async def collections_create(
 
 @router.get("", response_model=list[CollectionResponse])
 async def collections_list(user: str = "default_user"):
-    """Lists all available PGVector collections (name and UUID)."""
     return [CollectionResponse(**c) for c in await CollectionsManager(user).list()]
 
 
 @router.get("/{collection_id}", response_model=CollectionResponse)
 async def collections_get(collection_id: UUID):
-    """Retrieves details (name and UUID) of a specific PGVector collection."""
     collection = await CollectionsManager(user).get(str(collection_id))
     if not collection:
         raise HTTPException(
@@ -45,14 +44,12 @@ async def collections_get(collection_id: UUID):
 
 @router.delete("/{collection_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def collections_delete(collection_id: UUID):
-    """Deletes a specific PGVector collection by name."""
     await CollectionsManager(user).delete(str(collection_id))
     return "Collection deleted successfully."
 
 
 @router.patch("/{collection_id}", response_model=CollectionResponse)
 async def collections_update(collection_id: UUID, collection_data: CollectionUpdate):
-    """Updates a specific PGVector collection's name and/or metadata."""
     updated_collection = await CollectionsManager(user).update(
         str(collection_id),
         name=collection_data.name,

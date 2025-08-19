@@ -1,32 +1,34 @@
 import asyncio
 import json
 import uuid
+
 from fastapi import APIRouter
 from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel
 from starlette.requests import Request
 from starlette.responses import StreamingResponse
+
 from app.core.logging import logger
 
 router = APIRouter()
+
 
 class ChatInput(BaseModel):
     messages: list[str]
     thread_id: str
 
 
-from langchain_core.messages import BaseMessage
-import json
 from app.utils.util import Util
 
 
 @router.post("")
-async def chat(input: ChatInput):
+async def chat(request: Request, input: ChatInput):
     config = RunnableConfig(configurable={"thread_id": str(uuid.uuid4())})
     return StreamingResponse(
-        Util.stream_generator(input.messages, config),
-        media_type="text/event-stream"
+        Util.stream_generator(input.messages, config, checkpointer=request.app.state.checkpointer),
+        media_type="text/event-stream",
     )
+
 
 @router.post("/test")
 async def chat_endpoint(request: Request):
@@ -34,7 +36,12 @@ async def chat_endpoint(request: Request):
 
     async def stream_steps():
         # Step 1: Thinking / Planning
-        yield json.dumps({"type": "thinking", "content": "Planning execution steps using LangGraph..."}) + "\n"
+        yield (
+            json.dumps(
+                {"type": "thinking", "content": "Planning execution steps using LangGraph..."}
+            )
+            + "\n"
+        )
         await asyncio.sleep(1)
 
         # Step 2: Tool - SQL Generator
@@ -42,7 +49,10 @@ async def chat_endpoint(request: Request):
         await asyncio.sleep(1)
 
         sql = "SELECT * FROM orders WHERE created_at >= DATE('now', '-30 days')"
-        yield json.dumps({"type": "tool_result", "content": f"Tool SQLGenerator output:\n{sql}"}) + "\n"
+        yield (
+            json.dumps({"type": "tool_result", "content": f"Tool SQLGenerator output:\n{sql}"})
+            + "\n"
+        )
         await asyncio.sleep(1)
 
         # Step 3: Tool - Query Executor
@@ -53,10 +63,15 @@ async def chat_endpoint(request: Request):
             {"date": "2024-01-01", "total_orders": 45, "revenue": 2340},
             {"date": "2024-01-02", "total_orders": 52, "revenue": 2890},
         ]
-        yield json.dumps({
-            "type": "tool_result",
-            "content": f"Tool QueryExecutor output: {len(data)} rows returned"
-        }) + "\n"
+        yield (
+            json.dumps(
+                {
+                    "type": "tool_result",
+                    "content": f"Tool QueryExecutor output: {len(data)} rows returned",
+                }
+            )
+            + "\n"
+        )
         await asyncio.sleep(1)
 
         # Step 4: Tool - Summarizer
@@ -64,21 +79,24 @@ async def chat_endpoint(request: Request):
         await asyncio.sleep(1)
 
         summary = f"Total orders: {sum(d['total_orders'] for d in data)}, Revenue: ${sum(d['revenue'] for d in data)}"
-        yield json.dumps({
-            "type": "tool_result",
-            "content": f"Tool ResultSummarizer output: {summary}"
-        }) + "\n"
+        yield (
+            json.dumps(
+                {"type": "tool_result", "content": f"Tool ResultSummarizer output: {summary}"}
+            )
+            + "\n"
+        )
         await asyncio.sleep(1)
 
         # Step 5: Final Output
-        yield json.dumps({
-            "type": "final",
-            "content": "Workflow completed successfully.",
-            "data": {
-                "sql": sql,
-                "results": data,
-                "summary": summary
-            }
-        }) + "\n"
+        yield (
+            json.dumps(
+                {
+                    "type": "final",
+                    "content": "Workflow completed successfully.",
+                    "data": {"sql": sql, "results": data, "summary": summary},
+                }
+            )
+            + "\n"
+        )
 
     return StreamingResponse(stream_steps(), media_type="text/plain")

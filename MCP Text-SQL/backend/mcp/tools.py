@@ -1,10 +1,8 @@
 from datetime import datetime
 
-from sqlalchemy import inspect
-from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
-
 from resources import MCPResources
+from sqlalchemy import inspect, text
+from sqlalchemy.exc import SQLAlchemyError
 
 
 class MCPTools:
@@ -22,11 +20,11 @@ class MCPTools:
             table_names = inspector.get_table_names()
             return {"success": True, "tables": table_names}
 
-        except SQLAlchemyError as e:
+        except SQLAlchemyError:
             return {
                 "success": False,
                 "error": "Database connection failed. The server may be down or the credentials may be incorrect.",
-                "tables": []
+                "tables": [],
             }
 
     @staticmethod
@@ -34,30 +32,21 @@ class MCPTools:
         try:
             engine = MCPResources.get_engine()
             with engine.connect() as connection:
-                if query.strip().upper().startswith('SELECT'):
+                if query.strip().upper().startswith("SELECT"):
                     explain_query = f"EXPLAIN {query}"
                     connection.execute(text(explain_query))
 
-                return {
-                    "valid": True,
-                    "query": query,
-                    "message": "SQL syntax is valid"
-                }
+                return {"valid": True, "query": query, "message": "SQL syntax is valid"}
 
         except SQLAlchemyError as e:
-            return {
-                "valid": False,
-                "error": str(e),
-                "query": query,
-                "error_type": type(e).__name__
-            }
+            return {"valid": False, "error": str(e), "query": query, "error_type": type(e).__name__}
 
     @staticmethod
     def execute_sql_query(query: str, limit: int = 10) -> dict:
         engine = MCPResources.get_engine()
         try:
             with engine.connect() as connection:
-                if query.strip().upper().startswith('SELECT') and 'LIMIT' not in query.upper():
+                if query.strip().upper().startswith("SELECT") and "LIMIT" not in query.upper():
                     query = f"{query.rstrip(';')} LIMIT {limit}"
 
                 result = connection.execute(text(query))
@@ -71,14 +60,14 @@ class MCPTools:
                         "columns": columns,
                         "row_count": len(data),
                         "query": query,
-                        "executed_at": datetime.now().isoformat()
+                        "executed_at": datetime.now().isoformat(),
                     }
         except SQLAlchemyError as e:
             return {
                 "success": False,
                 "error": str(e),
                 "query": query,
-                "error_type": type(e).__name__
+                "error_type": type(e).__name__,
             }
 
     @staticmethod

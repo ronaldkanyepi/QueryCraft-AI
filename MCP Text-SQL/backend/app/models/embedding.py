@@ -1,9 +1,10 @@
 import uuid
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import String, ForeignKey, Index
+from sqlalchemy import ForeignKey, Index, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.models.base import Base
 
 

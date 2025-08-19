@@ -1,5 +1,5 @@
 import chainlit as cl
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from loguru import logger
 
 from app.agent.graph import builder
@@ -27,7 +27,7 @@ async def set_starters():
             label="Month-on-month revenue Store 1?",
             message="What is the month on month revenue percentage change for Store 1 any numbers should be rounded to 2 decimal places preserve the order of months and calculations in their natural order.",
             icon="https://cdn.jsdelivr.net/npm/@tabler/icons@latest/icons/alert-triangle.svg",
-        )
+        ),
     ]
 
 
@@ -38,7 +38,7 @@ async def display_node_activity(node_name: str, decision: str = None):
         "clarification": "❓ **Need more details...**\nAsking for clarification to better understand your request.",
         "main_logic": "🔍 **Processing your data question...**\nWorking on your SQL query and analysis.",
         "follow_up": "💬 **Providing guidance...**\nOffering help with data analysis questions.",
-        "handle_modification": "🛡️ **Data protection mode...**\nExplaining read-only data access policy."
+        "handle_modification": "🛡️ **Data protection mode...**\nExplaining read-only data access policy.",
     }
 
     message = node_messages.get(node_name, f"⚙️ **Processing: {node_name}**")
@@ -48,7 +48,7 @@ async def display_node_activity(node_name: str, decision: str = None):
             "handle_main_logic": "✅ **Ready to analyze!** - Processing your data question",
             "need_clarification": "❓ **Need clarification** - Asking for more specific details",
             "handle_follow_up": "💡 **Providing guidance** - Helping you ask better data questions",
-            "handle_modification_intent": "🛡️ **Data protection** - Explaining read-only access"
+            "handle_modification_intent": "🛡️ **Data protection** - Explaining read-only access",
         }
         decision_msg = decision_messages.get(decision, f"➡️ **Decision: {decision}**")
         message += f"\n{decision_msg}"
@@ -70,8 +70,7 @@ async def on_message(msg: cl.Message):
 
     # Collect all chunks first to understand the full flow
     async for chunk in graph.astream(
-            {"messages": [HumanMessage(content=msg.content)]},
-            config=config
+        {"messages": [HumanMessage(content=msg.content)]}, config=config
     ):
         total_chunks.append(chunk)
         chunks_processed += 1
@@ -84,15 +83,17 @@ async def on_message(msg: cl.Message):
             await display_node_activity(node_name, decision)
 
             # Collect any AI messages
-            if isinstance(output, dict) and 'messages' in output and output['messages']:
-                for message in output['messages']:
+            if isinstance(output, dict) and "messages" in output and output["messages"]:
+                for message in output["messages"]:
                     if isinstance(message, AIMessage) and message.content:
-                        all_ai_messages.append({
-                            'message': message,
-                            'node': node_name,
-                            'chunk_index': chunks_processed - 1,
-                            'content': message.content.strip()
-                        })
+                        all_ai_messages.append(
+                            {
+                                "message": message,
+                                "node": node_name,
+                                "chunk_index": chunks_processed - 1,
+                                "content": message.content.strip(),
+                            }
+                        )
 
     # Now determine and stream the final response
     if all_ai_messages:
@@ -101,7 +102,7 @@ async def on_message(msg: cl.Message):
 
         # Look for the last message with substantial content
         for msg_data in reversed(all_ai_messages):
-            if len(msg_data['content']) > 10:  # Substantial content
+            if len(msg_data["content"]) > 10:  # Substantial content
                 final_message_data = msg_data
                 break
 
@@ -110,8 +111,8 @@ async def on_message(msg: cl.Message):
             final_message_data = all_ai_messages[-1]
 
         if final_message_data:
-            content = final_message_data['content']
-            node_name = final_message_data['node']
+            content = final_message_data["content"]
+            node_name = final_message_data["node"]
 
             # Add context about which path was taken
             context_messages = {
@@ -119,7 +120,7 @@ async def on_message(msg: cl.Message):
                 "clarification": "❓ **Clarification Needed:**\n\n",
                 "follow_up": "💡 **Guidance:**\n\n",
                 "handle_modification": "🛡️ **Data Protection Notice:**\n\n",
-                "triage": "🤔 **Analysis:**\n\n"
+                "triage": "🤔 **Analysis:**\n\n",
             }
 
             context = context_messages.get(node_name, "")
@@ -136,9 +137,9 @@ async def on_message(msg: cl.Message):
     if not has_streamed_response:
         try:
             final_state = graph.get_state(config)
-            if final_state and final_state.values.get('messages'):
+            if final_state and final_state.values.get("messages"):
                 # Find the last AI message in the state
-                for message in reversed(final_state.values['messages']):
+                for message in reversed(final_state.values["messages"]):
                     if isinstance(message, AIMessage) and message.content:
                         final_msg = cl.Message(content=message.content)
                         await final_msg.send()
@@ -158,9 +159,9 @@ async def on_chat_start():
     """Initialize the chat session"""
     welcome_msg = cl.Message(
         content="👋 **Hi! I'm Simba, your data analyst assistant!** \n\n"
-                "I can help you explore and analyze your database with natural language queries. "
-                "Just ask me questions about your data and I'll generate the insights you need!\n\n"
-                "💡 *Choose a starter question below or ask me anything about your data.*"
+        "I can help you explore and analyze your database with natural language queries. "
+        "Just ask me questions about your data and I'll generate the insights you need!\n\n"
+        "💡 *Choose a starter question below or ask me anything about your data.*"
     )
     await welcome_msg.send()
 
@@ -169,7 +170,9 @@ async def on_chat_start():
 @cl.on_chat_resume
 async def on_chat_resume():
     """Handle when chat resumes after an interrupt"""
-    resume_msg = cl.Message(content="🔄 **Resuming analysis...** Let me continue processing your request.")
+    resume_msg = cl.Message(
+        content="🔄 **Resuming analysis...** Let me continue processing your request."
+    )
     await resume_msg.send()
 
 
@@ -182,13 +185,15 @@ async def handle_clarification_interrupt(config):
         async for chunk in graph.astream(None, config=config):
             # Handle the resumed execution
             for node_name, output in chunk.items():
-                if isinstance(output, dict) and 'messages' in output:
-                    for message in output['messages']:
+                if isinstance(output, dict) and "messages" in output:
+                    for message in output["messages"]:
                         if isinstance(message, AIMessage) and message.content:
                             final_msg = cl.Message(content=message.content)
                             await final_msg.send()
                             return
     except Exception as e:
         logger.error(f"Error handling clarification interrupt: {e}")
-        error_msg = cl.Message(content="❌ Sorry, there was an error processing your clarification.")
+        error_msg = cl.Message(
+            content="❌ Sorry, there was an error processing your clarification."
+        )
         await error_msg.send()

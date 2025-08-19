@@ -1,9 +1,8 @@
-from fastapi import APIRouter
-from app.core.rate_limiter import limiter
-from app.core.logging import logger
+from fastapi import APIRouter, Request, Security
+
 from app.core.auth import zitadel_auth
-from fastapi import Request
-from fastapi import Security
+from app.core.logging import logger
+from app.core.rate_limiter import limiter
 
 router = APIRouter()
 

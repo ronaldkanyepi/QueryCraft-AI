@@ -1,9 +1,8 @@
 import os
+
 from langchain.chat_models import init_chat_model
-from langchain_core.messages import SystemMessage, AIMessage
-from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.graph import StateGraph, START, END
-from langgraph.store.memory import InMemoryStore
+from langchain_core.messages import AIMessage, SystemMessage
+from langgraph.graph import END, START, StateGraph
 from rich.console import Console
 
 from app.agent.state import AgentState
@@ -11,10 +10,8 @@ from app.core.config import settings
 from app.utils.util import Util
 
 console = Console()
-from loguru import logger
+from app.core.logging import logger
 
-checkpointer = InMemorySaver()
-store = InMemoryStore()
 client = Util.get_mcp_client()
 
 os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
@@ -22,10 +19,12 @@ llm = init_chat_model("openai:gpt-4.1")
 
 
 async def triage_node(state: AgentState) -> dict:
-    system_prompt = await Util.get_formatted_prompt(client=client, server_name=settings.MCP_SERVER_NAME,prompt_name="Triage System Prompt")
+    system_prompt = await Util.get_formatted_prompt(
+        client=client, server_name=settings.MCP_SERVER_NAME, prompt_name="Triage System Prompt"
+    )
     print(system_prompt)
-    messages_for_llm = [SystemMessage(content=system_prompt)] + state['messages']
-    response =await llm.ainvoke(messages_for_llm)
+    messages_for_llm = [SystemMessage(content=system_prompt)] + state["messages"]
+    response = await llm.ainvoke(messages_for_llm)
     logger.warning(response)
     return {"decision": response.content}
 
@@ -36,28 +35,32 @@ def clarification_node(state: AgentState) -> dict:
     if clarification_count > 3:
         return {
             **state,
-            "messages": [AIMessage(content="I'm having trouble understanding your request. Please ask a specific question about your data and I'll be happy to help!")],
+            "messages": [
+                AIMessage(
+                    content="I'm having trouble understanding your request. Please ask a specific question about your data and I'll be happy to help!"
+                )
+            ],
             "clarification_count": clarification_count,
-            "decision": "end_conversation"
+            "decision": "end_conversation",
         }
 
-    last_user_message = state['messages'][-1].content if state['messages'] else ""
+    last_user_message = state["messages"][-1].content if state["messages"] else ""
 
     clarification_prompt = f"""
                 The user said: "{last_user_message}"
-            
-                This input is ambiguous for a data analysis assistant that helps with SQL queries. 
+
+                This input is ambiguous for a data analysis assistant that helps with SQL queries.
                 Generate a helpful clarifying question that:
                 - References what they said specifically
                 - Asks about the most likely missing information (specific tables, columns, metrics, time periods, filters, etc.)
                 - Sounds natural and conversational
                 - Is concise (1-2 sentences max)
                 - Helps narrow down what data they want to query
-            
+
                 Examples of good clarifying questions:
                 - "I'd be happy to help with customer data! Are you looking for customer counts, details about specific customers, or perhaps customer activity over a certain time period?"
                 - "Could you be more specific about what user information you need? For example, are you interested in user registrations, activity, or specific user details?"
-            
+
                 Clarifying question:
                 """
 
@@ -68,23 +71,29 @@ def clarification_node(state: AgentState) -> dict:
         **state,
         "messages": [AIMessage(content=clarification_response.content)],
         "clarification_count": clarification_count,
-        "decision": None
+        "decision": None,
     }
 
 
 def follow_up_node(state: AgentState) -> dict:
     return {
         **state,
-        "messages": [AIMessage(
-            content="Hey, I'm Simba the analysts I can only assist with questions about your data. How can I help you query or analyze your database?")]
+        "messages": [
+            AIMessage(
+                content="Hey, I'm Simba the analysts I can only assist with questions about your data. How can I help you query or analyze your database?"
+            )
+        ],
     }
 
 
 def handle_modification_node(state: AgentState) -> dict:
     return {
         **state,
-        "messages": [AIMessage(
-            content="Hey, I'm Simba the analyst. I can help you explore and analyze your data, but I can't make any changes to the database (like insert, update, or delete). How can I help you query your data instead?")]
+        "messages": [
+            AIMessage(
+                content="Hey, I'm Simba the analyst. I can help you explore and analyze your data, but I can't make any changes to the database (like insert, update, or delete). How can I help you query your data instead?"
+            )
+        ],
     }
 
 
@@ -96,10 +105,7 @@ def route_after_triage(state: AgentState):
 
 def main_logic_node(state: AgentState) -> dict:
     """Handle the main text-to-sql logic"""
-    return {
-        **state,
-        "messages": [AIMessage(content="Processing your data question...")]
-    }
+    return {**state, "messages": [AIMessage(content="Processing your data question...")]}
 
 
 def route_after_clarification(state: AgentState):
@@ -111,7 +117,7 @@ def route_after_clarification(state: AgentState):
     return decision
 
 
-def builder():
+def builder(checkpointer, store):
     graph_builder = StateGraph(AgentState)
 
     graph_builder.add_node("triage", triage_node)
@@ -128,19 +134,19 @@ def builder():
             "handle_main_logic": "main_logic",
             "handle_follow_up": "follow_up",
             "need_clarification": "clarification",
-            "handle_modification_intent": "handle_modification"
-        }
+            "handle_modification_intent": "handle_modification",
+        },
     )
     graph_builder.add_conditional_edges(
-        "clarification",
-        route_after_clarification,
-        {
-            "triage": "triage",
-            "END": END
-        }
+        "clarification", route_after_clarification, {"triage": "triage", "END": END}
     )
     graph_builder.add_edge("main_logic", END)
     graph_builder.add_edge("follow_up", END)
     graph_builder.add_edge("handle_modification", END)
-    graph = graph_builder.compile(checkpointer=checkpointer, store=store, interrupt_after=['clarification'],name='Text-to-SQL Agent')
+    graph = graph_builder.compile(
+        checkpointer=checkpointer,
+        store=store,
+        interrupt_after=["clarification"],
+        name="Text-to-SQL Agent",
+    )
     return graph

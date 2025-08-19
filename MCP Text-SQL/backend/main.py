@@ -1,15 +1,17 @@
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
+
+import uvicorn
 from fastapi import FastAPI
-from app.api.routes import router
+from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+
+from app.api.routes import router
 from app.core.auth import zitadel_auth
+from app.core.config import StartupChecker, settings
+from app.core.database import database_lifespan
 from app.core.rate_limiter import limiter, rate_limit_exceeded_handler
-from app.core.config import settings, StartupChecker
-from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
-from chainlit.utils import mount_chainlit
 
 
 @asynccontextmanager
@@ -17,7 +19,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     checker = StartupChecker(settings)
     checker.run()
     await zitadel_auth.openid_config.load_config()
-    yield
+    async with database_lifespan() as checkpointer:
+        app.state.checkpointer = checkpointer
+        yield
 
 
 app = FastAPI(

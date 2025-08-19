@@ -1,6 +1,8 @@
 import uuid as uuid_package
-from sqlalchemy import JSON, Uuid, String
+
+from sqlalchemy import JSON, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.models.base import Base
 
 
@@ -16,6 +18,4 @@ class CollectionStore(Base):
 
     # Establishes the one-to-many relationship from a collection to its embeddings.
     # 'passive_deletes=True' ensures that the database's ON DELETE CASCADE is used.
-    embeddings = relationship(
-        "EmbeddingStore", back_populates="collection", passive_deletes=True
-    )
+    embeddings = relationship("EmbeddingStore", back_populates="collection", passive_deletes=True)

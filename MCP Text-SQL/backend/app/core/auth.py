@@ -1,14 +1,9 @@
-"""
-FastAPI dependencies
-"""
-
 from fastapi import Depends
-
 from fastapi_zitadel_auth import ZitadelAuth
 from fastapi_zitadel_auth.exceptions import ForbiddenException
 from fastapi_zitadel_auth.user import DefaultZitadelUser
-from app.core.config import settings
 
+from app.core.config import settings
 
 zitadel_auth = ZitadelAuth(
     issuer_url=settings.ISSUER_URL,

@@ -1,11 +1,13 @@
 import builtins
 import json
-from loguru import logger
 import uuid
 from typing import Any, Optional
+
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from langchain_core.documents import Document
+from loguru import logger
+
 from app.core.database import get_db_connection, get_vectorstore
 from app.schemas.collection import CollectionDetails
 
@@ -321,9 +323,7 @@ class Collection:
             "metadata": metadata,
         }
 
-    async def search(
-        self, query: str, *, limit: int = 4
-    ) -> builtins.list[dict[str, Any]]:
+    async def search(self, query: str, *, limit: int = 4) -> builtins.list[dict[str, Any]]:
         details = await self._get_details_or_raise()
         store = get_vectorstore(collection_name=details["table_id"])
         results = store.similarity_search_with_score(query, k=limit)
