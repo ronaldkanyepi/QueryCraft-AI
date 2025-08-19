@@ -105,13 +105,13 @@
         },
         "history": {
             "title": "Laatste invoer",
-            "empty": "Zo leeg...",
+            "empty": "Zo league...",
             "show": "Toon geschiedenis"
         },
         "settings": {
             "title": "Instellingenpaneel"
         },
-        "watermark": "LLM's kunnen fouten maken. Overweeg het controleren van belangrijke informatie."
+        "watermark": "LLM's kunnen fouten maken. Overweeg het controleren van belangrijke informative."
     },
     "threadHistory": {
         "sidebar": {
@@ -141,7 +141,7 @@
             "actions": {
                 "delete": {
                     "title": "Verwijdering bevestigen",
-                    "description": "Dit zal het gesprek en bijbehorende berichten en elementen verwijderen. Deze actie kan niet ongedaan worden gemaakt",
+                    "description": "Dit zal het gesprek en bijbehorende berichten en elementen verwijderen. Deze active kan niet ongedaan worden gemaakt",
                     "success": "Chat verwijderd",
                     "inProgress": "Chat verwijderen"
                 },
@@ -189,7 +189,7 @@
     },
     "apiKeys": {
         "title": "Vereiste API-sleutels",
-        "description": "Om deze app te gebruiken zijn de volgende API-sleutels vereist. De sleutels worden opgeslagen in de lokale opslag van je apparaat.",
+        "description": "Om deze app te gebruiken zijn de volgende API-sleutels vereist. De sleutels worden opgeslagen in de locale opslag van je apparaat.",
         "success": {
             "saved": "Succesvol opgeslagen"
         }

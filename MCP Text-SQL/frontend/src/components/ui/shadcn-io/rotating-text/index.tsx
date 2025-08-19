@@ -1,5 +1,5 @@
 'use client';
- 
+
 import * as React from 'react';
 import {
   AnimatePresence,
@@ -9,7 +9,7 @@ import {
 } from 'motion/react';
 
 import { cn } from "@/lib/utils";
- 
+
 type RotatingTextProps = {
   text: string | string[];
   duration?: number;
@@ -17,7 +17,7 @@ type RotatingTextProps = {
   y?: number;
   containerClassName?: string;
 } & HTMLMotionProps<'div'>;
- 
+
 function RotatingText({
   text,
   y = -50,
@@ -27,7 +27,7 @@ function RotatingText({
   ...props
 }: RotatingTextProps) {
   const [index, setIndex] = React.useState(0);
- 
+
   React.useEffect(() => {
     if (!Array.isArray(text)) return;
     const interval = setInterval(() => {
@@ -35,9 +35,9 @@ function RotatingText({
     }, duration);
     return () => clearInterval(interval);
   }, [text, duration]);
- 
+
   const currentText = Array.isArray(text) ? text[index] : text;
- 
+
   return (
     <div className={cn('overflow-hidden py-1', containerClassName)}>
       <AnimatePresence mode="wait">
@@ -55,5 +55,5 @@ function RotatingText({
     </div>
   );
 }
- 
+
 export { RotatingText, type RotatingTextProps };

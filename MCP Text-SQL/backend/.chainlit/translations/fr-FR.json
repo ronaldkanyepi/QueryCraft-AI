@@ -21,7 +21,7 @@
             "title": "Connectez-vous pour acc\u00e9der \u00e0 l'application",
             "form": {
                 "email": {
-                    "label": "Adresse e-mail",
+                    "label": "Address e-mail",
                     "required": "l'e-mail est un champ obligatoire"
                 },
                 "password": {
@@ -44,10 +44,10 @@
                 "oauthCreateAccount": "Essayez de vous connecter avec un autre compte",
                 "emailCreateAccount": "Essayez de vous connecter avec un autre compte",
                 "callback": "Essayez de vous connecter avec un autre compte",
-                "oauthAccountNotLinked": "Pour confirmer votre identit\u00e9, connectez-vous avec le m\u00eame compte que vous avez utilis\u00e9 \u00e0 l'origine",
+                "oauthAccountNotLinked": "Pour confirmer votre identit\u00e9, connectez-vous avec le m\u00eame compte que vous avez utilise\u00e9 \u00e0 l'origine",
                 "emailSignin": "L'e-mail n'a pas pu \u00eatre envoy\u00e9",
                 "emailVerify": "Veuillez v\u00e9rifier votre e-mail, un nouvel e-mail a \u00e9t\u00e9 envoy\u00e9",
-                "credentialsSignin": "La connexion a \u00e9chou\u00e9. V\u00e9rifiez que les informations que vous avez fournies sont correctes",
+                "credentialsSignin": "La connexion a \u00e9chou\u00e9. V\u00e9rifiez que les information que vous avez fournies sont correctes",
                 "sessionRequired": "Veuillez vous connecter pour acc\u00e9der \u00e0 cette page"
             }
         },
@@ -67,12 +67,12 @@
         "speech": {
             "start": "D\u00e9marrer l'enregistrement",
             "stop": "Arr\u00eater l'enregistrement",
-            "connecting": "Connexion en cours"
+            "connecting": "Connexion en course"
         },
         "fileUpload": {
             "dragDrop": "Glissez et d\u00e9posez des fichiers ici",
             "browse": "Parcourir les fichiers",
-            "sizeLimit": "Limite :",
+            "sizeLimit": "Limit :",
             "errors": {
                 "failed": "\u00c9chec du t\u00e9l\u00e9versement",
                 "cancelled": "T\u00e9l\u00e9versement annul\u00e9 de"
@@ -81,7 +81,7 @@
         "messages": {
             "status": {
                 "using": "Utilise",
-                "used": "Utilis\u00e9"
+                "used": "Utilise\u00e9"
             },
             "actions": {
                 "copy": {
@@ -189,7 +189,7 @@
     },
     "apiKeys": {
         "title": "Cl\u00e9s API requises",
-        "description": "Pour utiliser cette application, les cl\u00e9s API suivantes sont requises. Les cl\u00e9s sont stock\u00e9es dans le stockage local de votre appareil.",
+        "description": "Pour utiliser cette application, les cl\u00e9s API suivantes sont requises. Les cl\u00e9s sont stock\u00e9es dans le stockage local de votre apparel.",
         "success": {
             "saved": "Enregistr\u00e9 avec succ\u00e8s"
         }
@@ -202,7 +202,7 @@
         "warning": "Avertissement",
         "caution": "Attention",
         "debug": "D\u00e9bogage",
-        "example": "Exemple",
+        "example": "Example",
         "success": "Succ\u00e8s",
         "help": "Aide",
         "idea": "Id\u00e9e",

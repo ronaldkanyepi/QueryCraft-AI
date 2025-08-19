@@ -102,14 +102,14 @@ const components: Options['components'] = {
     let language = 'javascript';
 
     if (node?.properties?.className) {
-      const classNames = Array.isArray(node.properties.className) 
-        ? node.properties.className 
+      const classNames = Array.isArray(node.properties.className)
+        ? node.properties.className
         : [node.properties.className];
-      
-      const languageClass = classNames.find((cls) => 
+
+      const languageClass = classNames.find((cls) =>
         typeof cls === 'string' && cls.startsWith('language-')
       );
-      
+
       if (languageClass && typeof languageClass === 'string') {
         language = languageClass.replace('language-', '');
       }

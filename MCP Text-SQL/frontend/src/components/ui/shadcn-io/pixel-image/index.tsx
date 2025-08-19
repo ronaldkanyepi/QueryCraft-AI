@@ -74,11 +74,11 @@ export const PixelImage = ({
     const startTimeout = setTimeout(() => {
       setIsVisible(true);
     }, 50);
-    
+
     const colorTimeout = setTimeout(() => {
       setShowColor(true);
     }, colorRevealDelay + 50);
-    
+
     return () => {
       clearTimeout(startTimeout);
       clearTimeout(colorTimeout);

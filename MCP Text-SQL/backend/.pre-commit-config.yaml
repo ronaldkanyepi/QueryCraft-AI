@@ -31,12 +31,13 @@ repos:
         entry: detect-secrets-hook
         args:
             - --exclude-files
-            - '(alembic\.ini|migrations/versions/.*)'
+            - '(\.chainlit/.*|\.env\.example|docker-compose\.yaml|alembic\.ini|migrations/.*)'
 
   - repo: https://github.com/crate-ci/typos
     rev: v1.32.0
     hooks:
       - id: typos
+        exclude: '\.chainlit/translations/.*\.json$'
 
 #  - repo: https://github.com/RobertCraigie/pyright-python
 #    rev: v1.1.402

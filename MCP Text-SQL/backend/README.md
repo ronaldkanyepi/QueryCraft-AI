@@ -1,6 +1,6 @@
 How to run
 
-- >  $env:PYTHONPATH = "." 
+- >  $env:PYTHONPATH = "."
 - fastmcp dev .\app\mcp\server.py
 
 
@@ -8,7 +8,7 @@ STDIO-
 - > uv run "D:\PORTFOLIO PROJECTS\MCP Text-SQL\app\mcp\server.py"
 
 With stremable-http
-run the server file first 
+run the server file first
 the connect on browser e.g  http://127.0.0.1:8005/mcp
 
 
@@ -16,8 +16,8 @@ the connect on browser e.g  http://127.0.0.1:8005/mcp
 
 
 Force kill all MCP tasks
--  netstat -ano | findstr :6277    
--  taskkill /PID 61079 /F 
+-  netstat -ano | findstr :6277
+-  taskkill /PID 61079 /F
 - > Get-Process | Where-Object { $_.ProcessName -like "*python*" -or $_.ProcessName -like "*fastmcp*" -or $_.ProcessName -like "*mcp*" } | Stop-Process -Force
 
 
@@ -66,27 +66,27 @@ graph TD
 
 ```mermaid
 graph TD
-    
+
     subgraph "Stage 1"
         A[_START_] -- "User Asks a Question" --> B{ Triage : Classify Question}
         B -- "Ambiguous Question"  --> C[clarification]
         B -- "Irrelevant Question" --> D[Handle Irrelevant Questions ]
         B -- "Handle DB Modifications Intent" --> E[Handle DB Modifications]
         C -- "Human Feedback" --> B
-       
+
     end
-    
-    subgraph "Stage 2" 
+
+    subgraph "Stage 2"
           B -- "Relevant Question"   --> F[main_logic]
     end
-    
+
     subgraph "Final Stage"
         D -- "Terminate" --> X[_END_]
         C --"Max Retries Exceeded (3)"--> X
         E -- "Terminate" --> X
         F -- "Terminate" --> X
     end
-    
+
 
 
 ```
