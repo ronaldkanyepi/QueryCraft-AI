@@ -3,7 +3,7 @@ repos:
     rev: v0.12.2
     hooks:
       - id: ruff
-        args: [--fix]
+        args: [--fix, --exit-non-zero-on-fix]
         files: ^backend/app/
       - id: ruff-format
         files: ^backend/app/

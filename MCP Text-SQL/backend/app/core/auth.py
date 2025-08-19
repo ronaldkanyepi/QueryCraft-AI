@@ -2,7 +2,7 @@ from fastapi import Depends
 from fastapi_zitadel_auth import ZitadelAuth
 from fastapi_zitadel_auth.exceptions import ForbiddenException
 from fastapi_zitadel_auth.user import DefaultZitadelUser
-import pandas as pd
+
 from app.core.config import settings
 
 zitadel_auth = ZitadelAuth(
@@ -27,6 +27,4 @@ async def validate_is_admin_user(
     required_role = "admin"
     if required_role not in user.claims.project_roles:
         raise ForbiddenException(f"User does not have role assigned: {required_role}")
-
 import pandas as pd
-print("hdgsggsgdf")
