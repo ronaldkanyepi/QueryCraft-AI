@@ -2,7 +2,7 @@ from fastapi import Depends
 from fastapi_zitadel_auth import ZitadelAuth
 from fastapi_zitadel_auth.exceptions import ForbiddenException
 from fastapi_zitadel_auth.user import DefaultZitadelUser
-
+import pandas as pd
 from app.core.config import settings
 
 zitadel_auth = ZitadelAuth(
