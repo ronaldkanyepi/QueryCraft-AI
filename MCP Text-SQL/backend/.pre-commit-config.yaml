@@ -3,7 +3,7 @@ repos:
     rev: v0.12.2
     hooks:
       - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
+        args: [ --fix ]
         files: ^backend/app/
       - id: ruff-format
         files: ^backend/app/
@@ -30,18 +30,15 @@ repos:
         language: python
         entry: detect-secrets-hook
         args:
-          - --exclude-files
-          - '(alembic\.ini|migrations/versions/.*)'
+            - --exclude-files
+            - '(alembic\.ini|migrations/versions/.*)'
 
   - repo: https://github.com/crate-ci/typos
     rev: v1.32.0
     hooks:
       - id: typos
-        files: ^backend/app/
 
-# Optional: uncomment and configure if you want Pyright
 #  - repo: https://github.com/RobertCraigie/pyright-python
 #    rev: v1.1.402
 #    hooks:
 #      - id: pyright
-#        files: ^backend/app/
