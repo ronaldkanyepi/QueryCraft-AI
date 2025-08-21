@@ -28,6 +28,7 @@ dependencies = [
     "langgraph-api>=0.2.125",
     "langgraph-checkpoint-postgres>=2.0.23",
     "langgraph-cli[inmem]>=0.3.6",
+    "langmem>=0.0.29",
     "langsmith>=0.4.10",
     "logging>=0.4.9.6",
     "loguru>=0.7.3",
@@ -71,8 +72,9 @@ show-fixes = true
 unsafe-fixes = true
 
 [tool.ruff.lint]
-select = ["I", "F"]  # I = sorting imports, F = pyflakes (unused imports, undefined)
-pycodestyle.max-doc-length = 100
+select = ["I", "F", "E", "W"]  # Import sorting (I), pyflakes (F), pycodestyle (E/W) for blank line checks
+ignore = ["E501"] # Let Black handle wrapping, ignore line-too-long rule
+pycodestyle.max-doc-length = 300
 pydocstyle.convention = "google"
 
 [tool.ruff.format]

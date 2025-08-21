@@ -2,7 +2,6 @@ import json
 
 from langchain_core.messages import BaseMessage, HumanMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
-from langgraph.store.memory import InMemoryStore
 
 from app.core.config import settings
 
@@ -11,7 +10,6 @@ class Util:
     @staticmethod
     def get_mcp_client():
         """Connect to MCP server"""
-
         return MultiServerMCPClient(
             {
                 settings.MCP_SERVER_NAME: {
@@ -37,17 +35,19 @@ class Util:
         return resources[0].data
 
     @staticmethod
-    async def stream_generator(input_messages: list, config: dict, checkpointer):
+    async def stream_generator(input_messages: list, config: dict):
         """Yields server-sent events for each step of the graph's execution."""
-        from app.agent.graph import builder
-
+        from main import app_state
         messages_as_objects = [HumanMessage(content=msg) for msg in input_messages]
         nodes_to_monitor = ["Text-to-SQL Agent", "triage", "llm_stream"]
-        async for event in builder(checkpointer=checkpointer, store=InMemoryStore()).astream_events(
-            {"messages": messages_as_objects},
-            config=config,
-            version="v2",
-            include_names=nodes_to_monitor,
+        async for event in (
+            app_state.graph
+            .astream_events(
+                {"messages": messages_as_objects},
+                config=config,
+                version="v2",
+                include_names=nodes_to_monitor,
+            )
         ):
             event_name = event["event"]
 

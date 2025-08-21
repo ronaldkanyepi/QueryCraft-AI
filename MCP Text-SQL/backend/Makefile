@@ -63,7 +63,6 @@ kill-port: ## Find and kill a process by port (default: $(PORT))
 
 setup: ## Create venv and install dependencies using uv
 	@echo "Setting up virtual environment and installing dependencies..."
-	@uv venv
 	@uv sync
 	@echo "\n Setup complete. Activate the environment with:"
 	@echo "   source .venv/bin/activate"
@@ -72,11 +71,11 @@ migrate: ## Run database migrations using alembic
 	uv run alembic upgrade head
 
 format: ## Format code using ruff
-	uv run ruff format src/
+	uv run ruff format app/
 
-lint: ## Lint and type-check code with ruff and mypy
-	uv run ruff check --fix src/
-	uv run mypy src/
+lint: ## Lint and type-check code with ruff
+	uv run ruff check --fix app/
+
 
 # ==============================================================================
 # LangGraph & MCP Server

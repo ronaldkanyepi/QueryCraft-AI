@@ -22,9 +22,9 @@ class Defaults:
     DB_PASSWORD = ""
 
     # =======Model======
-    OPENAI_API_KEY = "sk-...."
-    OPENAI_MODEL_NAME = "gpt-4o"
-    OPENAI_TEMPERATURE = 0.1
+    LLM_API_KEY = "sk-...." # pragma: allowlist secret
+    LLM_MODEL_NAME = "gpt-4o"
+    LLM_TEMPERATURE = 0.1
 
     # == Vector Database ====
     DEFAULT_COLLECTION_NAME = "default_collection"
@@ -58,6 +58,6 @@ class Defaults:
     MCP_SERVER_TRANSPORT = "streamable_http"
 
     # =======Tracing & Evaluation========
-    LANGSMITH_API_KEY = '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'
+    LANGSMITH_API_KEY = "lsv2_......" # pragma: allowlist secret
     LANGSMITH_TRACING = "true"
     LANGSMITH_PROJECT = "text-to-sql-agent"

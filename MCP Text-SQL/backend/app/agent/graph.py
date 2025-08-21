@@ -2,27 +2,31 @@ import os
 
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import AIMessage, SystemMessage
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
+from langgraph.graph.state import CompiledStateGraph
+from langgraph.store.memory import InMemoryStore
 from rich.console import Console
 
 from app.agent.state import AgentState
 from app.core.config import settings
+from app.core.logging import logger
 from app.utils.util import Util
 
 console = Console()
-from app.core.logging import logger
+
 
 client = Util.get_mcp_client()
 
-os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
-llm = init_chat_model("openai:gpt-4.1")
+os.environ["OPENAI_API_KEY"] = settings.LLM_API_KEY
+llm = init_chat_model(settings.LLM_MODEL_NAME)
 
 
 async def triage_node(state: AgentState) -> dict:
     system_prompt = await Util.get_formatted_prompt(
         client=client, server_name=settings.MCP_SERVER_NAME, prompt_name="Triage System Prompt"
     )
-    print(system_prompt)
+
     messages_for_llm = [SystemMessage(content=system_prompt)] + state["messages"]
     response = await llm.ainvoke(messages_for_llm)
     logger.warning(response)
@@ -117,7 +121,7 @@ def route_after_clarification(state: AgentState):
     return decision
 
 
-def builder(checkpointer, store):
+def builder(*args, **kwargs) -> CompiledStateGraph:
     graph_builder = StateGraph(AgentState)
 
     graph_builder.add_node("triage", triage_node)
@@ -143,10 +147,23 @@ def builder(checkpointer, store):
     graph_builder.add_edge("main_logic", END)
     graph_builder.add_edge("follow_up", END)
     graph_builder.add_edge("handle_modification", END)
-    graph = graph_builder.compile(
+
+    checkpointer = kwargs.get("checkpointer")
+    store = kwargs.get("store")
+    reflection_executor = kwargs.get("reflection_executor")
+
+    if checkpointer is None:
+        checkpointer = MemorySaver()
+    if store is None:
+        store = InMemoryStore()
+
+    return graph_builder.compile(
         checkpointer=checkpointer,
         store=store,
         interrupt_after=["clarification"],
         name="Text-to-SQL Agent",
     )
-    return graph
+
+
+def get_in_memory_graph():
+    return builder()

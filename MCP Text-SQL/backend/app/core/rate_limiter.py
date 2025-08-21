@@ -9,9 +9,7 @@ from app.core.logging import logger
 limiter = Limiter(key_func=get_remote_address, default_limits=["20/minute"])
 
 
-async def rate_limit_exceeded_handler(
-    request: Request, exc: RateLimitExceeded
-) -> JSONResponse:
+async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
     """
     Logs the rate limit event and returns a custom 429 JSON response.
     """

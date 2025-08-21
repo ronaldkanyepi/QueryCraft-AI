@@ -9,7 +9,6 @@ from pydantic import (
     AnyUrl,
     BeforeValidator,
     EmailStr,
-    SecretStr,
     ValidationError,
     computed_field,
 )
@@ -48,7 +47,7 @@ class Settings(BaseSettings):
     DB_PORT: int = Defaults.DB_PORT
     DB_NAME: str = Defaults.DB_NAME
     DB_USER: str = Defaults.DB_USER
-    DB_PASSWORD: SecretStr = Defaults.DB_PASSWORD
+    DB_PASSWORD: str = Defaults.DB_PASSWORD
 
     # === Vector Database =====
     DEFAULT_COLLECTION_NAME: str = Defaults.DEFAULT_COLLECTION_NAME
@@ -76,7 +75,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_HOST: str | None = None
     SMTP_USER: str | None = None
-    SMTP_PASSWORD: SecretStr | None = None
+    SMTP_PASSWORD: str | None = None
     EMAILS_FROM_EMAIL: EmailStr | None = None
     EMAILS_FROM_NAME: str | None = Defaults.APP_NAME
 
@@ -87,9 +86,9 @@ class Settings(BaseSettings):
     LOG_TO_FILE: bool = Defaults.LOG_TO_FILE
 
     # === Model ====
-    OPENAI_API_KEY: SecretStr = "sk-...."  # pragma: allowlist secret
-    OPENAI_MODEL_NAME: str = "gpt-4o"
-    OPENAI_TEMPERATURE: float = 0.1
+    LLM_API_KEY: str = "sk-...."  # pragma: allowlist secret
+    LLM_MODEL_NAME: str = "gpt-4o"
+    LLM_TEMPERATURE: float = 0.1
 
     # === Redis ===
     REDIS_URI: str = Defaults.REDIS_URI
@@ -101,7 +100,7 @@ class Settings(BaseSettings):
     MCP_SERVER_TRANSPORT: Literal["streamable_http"] = Defaults.MCP_SERVER_TRANSPORT
 
     # =======Tracing & Evaluation========
-    LANGSMITH_API_KEY: SecretStr = Defaults.LANGSMITH_API_KEY
+    LANGSMITH_API_KEY: str = Defaults.LANGSMITH_API_KEY
     LANGSMITH_TRACING: bool = Defaults.LANGSMITH_TRACING
     LANGSMITH_PROJECT: str = Defaults.LANGSMITH_PROJECT
 

@@ -20,6 +20,5 @@ def read_items(request: Request):
     dependencies=[Security(zitadel_auth, scopes=["scope1"])],
 )
 def protected_by_scope(request: Request):
-    """Protected endpoint, requires a specific scope"""
     user = request.state.user
     return {"message": "Hello world!", "user": user}

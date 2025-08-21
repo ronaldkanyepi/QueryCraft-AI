@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
 
 
 class AgentState(TypedDict, total=False):
@@ -11,4 +11,6 @@ class AgentState(TypedDict, total=False):
     query_results: Optional[List[Any]]
     analysis_summary: Optional[str]
     reasoning_steps: Optional[List[str]]
-    tools_used: Optional[List[dict]]
+    tools_used: Optional[List[Dict]]
+    memory_context: Optional[Dict]
+    extracted_memories: Optional[List]

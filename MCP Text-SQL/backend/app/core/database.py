@@ -1,19 +1,18 @@
-from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, Optional, Union
+from typing import Any, AsyncGenerator, Optional, Union
 
 import asyncpg
 import sqlalchemy
 from langchain_core.embeddings import Embeddings
 from langchain_postgres.vectorstores import PGVector
-from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from loguru import logger
-from psycopg.rows import dict_row
-from psycopg_pool import AsyncConnectionPool
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.core.config import settings
+
+_pool: asyncpg.Pool | None = None
+
 
 _pool: asyncpg.Pool | None = None
 
@@ -79,14 +78,3 @@ def get_vectorstore(
         collection_metadata=collection_metadata,
     )
     return store
-
-
-@asynccontextmanager
-async def database_lifespan() -> AsyncIterator[AsyncPostgresSaver]:
-    uri = f"postgresql://{settings.DB_USER}:{settings.DB_PASSWORD}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
-
-    pool = AsyncConnectionPool(conninfo=uri, kwargs={"autocommit": True, "row_factory": dict_row})
-    async with pool:
-        checkpointer = AsyncPostgresSaver(pool)
-        await checkpointer.setup()
-        yield checkpointer
