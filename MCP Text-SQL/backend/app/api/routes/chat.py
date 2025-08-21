@@ -1,30 +1,30 @@
 import asyncio
 import json
-import uuid
 
 from fastapi import APIRouter, Depends
 from langchain_core.runnables import RunnableConfig
 from starlette.requests import Request
 from starlette.responses import StreamingResponse
 
+from app.core.auth import DefaultZitadelUser, zitadel_auth
 from app.core.logging import logger
 from app.schemas.chat import ChatRequest
 from app.utils.util import Util
-from app.core.auth import zitadel_auth, validate_is_admin_user, DefaultZitadelUser
 
 router = APIRouter()
 
 
 @router.post("")
-async def chat(request: Request, input: ChatRequest,user: DefaultZitadelUser = Depends(zitadel_auth),):
+async def chat(
+    request: Request,
+    input: ChatRequest,
+    user: DefaultZitadelUser = Depends(zitadel_auth),
+):
     logger.info(f"Received request: {input}")
     logger.info(f"Hello {user.claims.email}")
     config = RunnableConfig(configurable={"thread_id": input.thread_id})
     return StreamingResponse(
-        Util.stream_generator(
-            input.messages,
-            config
-        ),
+        Util.stream_generator(input.messages, config),
         media_type="text/event-stream",
     )
 

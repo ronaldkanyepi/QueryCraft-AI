@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -14,11 +15,11 @@ from psycopg_pool import AsyncConnectionPool
 
 from app.core.config import settings
 from app.core.logging import logger
-import os
 
 _pool: asyncpg.Pool | None = None
 
 os.environ["OPENAI_API_KEY"] = settings.LLM_API_KEY
+
 
 @asynccontextmanager
 async def init_memory() -> AsyncGenerator[dict[str, AsyncPostgresSaver], None]:

@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
+from typing import AsyncGenerator
 
 import uvicorn
 from fastapi import FastAPI
@@ -17,6 +17,7 @@ from app.schemas.app import AppState
 
 app_state = AppState()
 
+
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator:
     checker = StartupChecker(settings)
@@ -26,10 +27,7 @@ async def lifespan(_: FastAPI) -> AsyncGenerator:
         app_state.checkpointer = memory["checkpointer"]
         app_state.store = memory["store"]
         app_state.reflection_executor = memory["reflection_executor"]
-        app_state.graph = builder(
-            checkpointer=app_state.checkpointer,
-            store=app_state.store
-        )
+        app_state.graph = builder(checkpointer=app_state.checkpointer, store=app_state.store)
         yield
 
 

@@ -38,16 +38,14 @@ class Util:
     async def stream_generator(input_messages: list, config: dict):
         """Yields server-sent events for each step of the graph's execution."""
         from main import app_state
+
         messages_as_objects = [HumanMessage(content=msg) for msg in input_messages]
         nodes_to_monitor = ["Text-to-SQL Agent", "triage", "llm_stream"]
-        async for event in (
-            app_state.graph
-            .astream_events(
-                {"messages": messages_as_objects},
-                config=config,
-                version="v2",
-                include_names=nodes_to_monitor,
-            )
+        async for event in app_state.graph.astream_events(
+            {"messages": messages_as_objects},
+            config=config,
+            version="v2",
+            include_names=nodes_to_monitor,
         ):
             event_name = event["event"]
 

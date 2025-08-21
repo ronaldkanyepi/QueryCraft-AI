@@ -150,7 +150,7 @@ def builder(*args, **kwargs) -> CompiledStateGraph:
 
     checkpointer = kwargs.get("checkpointer")
     store = kwargs.get("store")
-    reflection_executor = kwargs.get("reflection_executor")
+    kwargs.get("reflection_executor")
 
     if checkpointer is None:
         checkpointer = MemorySaver()

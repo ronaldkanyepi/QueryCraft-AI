@@ -90,7 +90,7 @@ def get_triage_system_prompt():
 
 @mcp.custom_route("/health", methods=["GET"])
 async def health_check(request):
-    return JSONResponse({"status": "healthy","timestamp": datetime.now().isoformat()})
+    return JSONResponse({"status": "healthy", "timestamp": datetime.now().isoformat()})
 
 
 if __name__ == "__main__":

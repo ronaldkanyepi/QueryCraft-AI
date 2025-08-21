@@ -22,7 +22,7 @@ class Defaults:
     DB_PASSWORD = ""
 
     # =======Model======
-    LLM_API_KEY = "sk-...." # pragma: allowlist secret
+    LLM_API_KEY = "sk-...."  # pragma: allowlist secret
     LLM_MODEL_NAME = "gpt-4o"
     LLM_TEMPERATURE = 0.1
 
@@ -58,6 +58,6 @@ class Defaults:
     MCP_SERVER_TRANSPORT = "streamable_http"
 
     # =======Tracing & Evaluation========
-    LANGSMITH_API_KEY = "lsv2_......" # pragma: allowlist secret
+    LANGSMITH_API_KEY = "lsv2_......"  # pragma: allowlist secret
     LANGSMITH_TRACING = "true"
     LANGSMITH_PROJECT = "text-to-sql-agent"
