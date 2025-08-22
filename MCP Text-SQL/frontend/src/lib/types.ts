@@ -57,6 +57,8 @@ export interface UploadDocumentResponse {
 export interface ChatApiPayload  {
     messages: string[];
     thread_id: string;
+    user_id: string|null;
+    session_id: string|null;
 }
 
 export interface ChatMessage {
@@ -66,4 +68,18 @@ export interface ChatMessage {
     timestamp: Date;
     status?: string;
     // ... other fields like sql, results, etc.
+}
+
+
+export interface MetadataField {
+    key: string;
+    value: string;
+    readonly?: boolean;
+}
+
+export interface SearchResult {
+    id: string;
+    page_content: string;
+    metadata: Record<string, unknown>;
+    score: number;
 }

@@ -18,8 +18,15 @@ export interface DocumentResponse {
         producer?: string;
         moddate?: string;
         creationdate?: string;
+        file_id?: string;
         [key: string]: unknown;
     } | null;
+}
+
+// Add proper typing for the table meta
+interface TableMeta {
+    handleDeleteDocument?: (doc: DocumentResponse) => void;
+    handleViewDocument?: (doc: DocumentResponse) => void;
 }
 
 function formatDate(dateString?: string | null): string {
@@ -64,10 +71,10 @@ export const columns: ColumnDef<DocumentResponse>[] = [
         header: "Content Preview",
         cell: ({ row }) => {
             const content = row.original.content || "";
-            const preview = content.substring(0, 80);
+            const preview = content.substring(0, 50);
             return (
                 <div className="flex items-center space-x-2" title={content}>
-                    {preview}{content.length > 80 ? '...' : ''}
+                    {preview}{content.length > 50? '...' : ''}
                 </div>
             );
         },
@@ -119,10 +126,9 @@ export const columns: ColumnDef<DocumentResponse>[] = [
         id: "actions",
         cell: ({ row, table }) => {
             const doc = row.original;
-            const handleDelete = table.options.meta?.handleDeleteDocument;
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-expect-error
-            const handleViewDocument = table.options.meta?.handleViewDocument;
+            const meta = table.options.meta as TableMeta | undefined;
+            const handleDelete = meta?.handleDeleteDocument;
+            const handleViewDocument = meta?.handleViewDocument;
 
             return (
                 <div className="text-right">
@@ -140,7 +146,7 @@ export const columns: ColumnDef<DocumentResponse>[] = [
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 className="text-destructive focus:bg-destructive/10"
-                                onClick={() => handleDelete?.(doc.id)}
+                                onClick={() => handleDelete?.(doc)}
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Delete

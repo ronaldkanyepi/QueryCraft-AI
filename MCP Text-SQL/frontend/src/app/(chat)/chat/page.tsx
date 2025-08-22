@@ -70,6 +70,7 @@ import {
 } from '@/components/ui/shadcn-io/code-block';
 import { ChatApiPayload } from '@/lib/types';
 import { apiClient } from '@/lib/apiClient';
+import { useSession, signOut } from "next-auth/react";
 
 type ChatMessage = {
     id: string;
@@ -99,6 +100,8 @@ export default function IntegratedAIChat() {
     const [text, setText] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const { data: session, status } = useSession();
+
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -107,6 +110,9 @@ export default function IntegratedAIChat() {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+
+
+
 
     const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
         event.preventDefault();
@@ -136,11 +142,16 @@ export default function IntegratedAIChat() {
         };
         setMessages((prev) => [...prev, initialAssistantMessage]);
 
+
         try {
+
             const payload: ChatApiPayload = {
                 messages: [currentText],
                 thread_id: uuidv4(),
+                user_id: session?.user?.id|| 'default_user',
+                session_id: session?.user?.id || 'fallback'
             };
+
 
             const response = await apiClient.streamChatMessage(payload);
             const reader = response.body!.getReader();

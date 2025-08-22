@@ -21,12 +21,12 @@ async function handler(req: NextRequest) {
 
     const backendPath = requestPath.replace(/^\/api\/backend\//, "/api/v1/");
 
-    console.log("Request path: " + backendPath);
-    console.log("backendPath: " + backendPath);
+    // console.log("Request path: " + backendPath);
+    // console.log("backendPath: " + backendPath);
 
     const backendUrl = `${BACKEND_BASE_URL}${backendPath}${req.nextUrl.search}`;
 
-    console.log(`Proxying request to: ${backendUrl}`);
+    // console.log(`Proxying request to: ${backendUrl}`);
 
     const headers = new Headers(req.headers);
     headers.set("host", new URL(backendUrl).host);
@@ -36,13 +36,13 @@ async function handler(req: NextRequest) {
         headers.set("Authorization", `Bearer ${session.accessToken}`);
     }
 
-    // Add user context headers for the backend
-    if (session?.user) {
-        // headers.set("X-User-ID", session.user?.id || '');
-        headers.set("X-User-Email", session.user.email || '');
-        headers.set("X-User-Name", session.user.name || '');
 
-    }
+    // if (session?.user) {
+    //     // headers.set("X-User-ID", session.user?.id || '');
+    //     headers.set("X-User-Email", session.user.email || '');
+    //     headers.set("X-User-Name", session.user.name || '');
+    //
+    // }
 
     try {
         const backendResponse = await fetch(backendUrl, {

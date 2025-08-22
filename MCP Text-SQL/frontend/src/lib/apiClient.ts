@@ -5,7 +5,7 @@ import {
     CollectionCreate,
     CollectionResponse,
     CollectionUpdate,
-    DocumentResponse,
+    DocumentResponse, SearchResult,
     UploadDocumentResponse
 } from "@/lib/types";
 import { getSession } from "next-auth/react";
@@ -26,7 +26,6 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 async function handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         if (response.status === 401) {
-            // Handle unauthorized - could trigger re-authentication
             throw new Error("Authentication required. Please sign in again.");
         }
 
@@ -87,6 +86,19 @@ export const apiClient = {
         return handleResponse<void>(response);
     },
 
+    async searchDocuments(collectionId: string, query: string, limit: number = 4) {
+        const authHeaders = await getAuthHeaders();
+        const response = await fetch(`${PROXY_BASE_URL}/documents/${collectionId}/search`, {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json",
+                ...authHeaders
+            },
+            body: JSON.stringify({ query, limit })
+        });
+
+        return handleResponse<SearchResult>(response);
+    },
     async listDocuments(collectionId: string): Promise<DocumentResponse[]> {
         const authHeaders = await getAuthHeaders();
         const response = await fetch(`${PROXY_BASE_URL}/documents/${collectionId}`, {
@@ -105,7 +117,7 @@ export const apiClient = {
         return handleResponse<UploadDocumentResponse>(response);
     },
 
-    async deleteDocument(collectionId: string, documentId: string): Promise<{ [key: string]: boolean }> {
+    async deleteDocument(collectionId: string, documentId: unknown): Promise<{ [p: string]: boolean }> {
         const authHeaders = await getAuthHeaders();
         const response = await fetch(`${PROXY_BASE_URL}/documents/${collectionId}/${documentId}`, {
             method: "DELETE",
