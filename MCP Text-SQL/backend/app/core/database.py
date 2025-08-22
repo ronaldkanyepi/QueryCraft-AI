@@ -14,9 +14,6 @@ from app.core.config import settings
 _pool: asyncpg.Pool | None = None
 
 
-_pool: asyncpg.Pool | None = None
-
-
 async def get_db_pool() -> asyncpg.Pool:
     """Get the pg connection pool."""
     global _pool

@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "agentevals>=0.0.9",
     "alembic>=1.16.4",
+    "async-lru>=2.0.5",
     "asyncpg>=0.30.0",
     "beautifulsoup4>=4.13.4",
     "chainlit>=2.6.5",
