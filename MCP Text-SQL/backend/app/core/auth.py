@@ -26,7 +26,6 @@ zitadel_auth = ZitadelAuth(
 async def validate_is_admin_user(
     user: DefaultZitadelUser = Depends(zitadel_auth),
 ) -> None:
-    """Validate that the authenticated user is a user with a specific role"""
     required_role = "admin"
     if required_role not in user.claims.project_roles:
         raise ForbiddenException(f"User does not have role assigned: {required_role}")
@@ -45,7 +44,7 @@ async def fetch_userinfo(access_token: str):
 async def get_enhanced_user(
     user: DefaultZitadelUser = Depends(zitadel_auth),
     authorization: str = Header(..., alias="Authorization"),
-):
+) -> dict:
     """Get authenticated user with additional userinfo"""
     try:
         if not authorization.startswith("Bearer "):
@@ -53,10 +52,12 @@ async def get_enhanced_user(
 
         access_token = authorization.replace("Bearer ", "")
         additional_info = await fetch_userinfo(access_token)
-        user.additional_info = additional_info
-        return user
+        user_data = user.claims.__dict__
+        user_data["additional_info"] = additional_info
+        return user_data
 
     except Exception as e:
         logger.error(f"Failed to fetch additional user info: {e}")
-        user.additional_info = {}
-        return user
+        user_data = user.claims.__dict__
+        user_data.additional_info = {}
+        return user_data

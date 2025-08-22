@@ -6,7 +6,7 @@ from langchain_core.runnables import RunnableConfig
 from starlette.requests import Request
 from starlette.responses import StreamingResponse
 
-from app.core.auth import DefaultZitadelUser, get_enhanced_user
+from app.core.auth import get_enhanced_user
 from app.core.logging import logger
 from app.schemas.chat import ChatRequest
 from app.utils.util import Util
@@ -18,13 +18,10 @@ router = APIRouter()
 async def chat(
     request: Request,
     input: ChatRequest,
-    user: DefaultZitadelUser = Depends(get_enhanced_user),
+    user: dict = Depends(get_enhanced_user),
 ):
     logger.info(f"Received request: {input}")
-    logger.info(f"User object attributes: {dir(user)}")
-    logger.info(f"User claims: {user.claims.__dict__}")
-    logger.info(f"User email: {user.claims.email}")
-    logger.info(f"Additional info: {user.additional_info}")
+    logger.info(f"Additional info: {user['additional_info']}")
 
     config = RunnableConfig(configurable={"thread_id": input.thread_id})
     return StreamingResponse(
