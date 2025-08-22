@@ -243,6 +243,7 @@ class Collection:
             )
 
             deleted_count = int(result.split()[-1])
+            logger.warning("")
             logger.info(f"Deleted {deleted_count} embeddings for file {file_id!r}.")
 
             if deleted_count == 0:
@@ -254,7 +255,7 @@ class Collection:
             rows = await conn.fetch(
                 """
                 WITH UniqueFileChunks AS (
-                  SELECT DISTINCT ON (lpe.cmetadata->>'file_id')
+                  SELECT -- DISTINCT ON (lpe.cmetadata->>'file_id')
                          lpe.id,
                          lpe.cmetadata->>'file_id' AS file_id
                     FROM langchain_pg_embedding lpe

@@ -1,11 +1,12 @@
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from langchain_core.documents import Document
 from loguru import logger
 from pydantic import TypeAdapter, ValidationError
 
+from app.core.auth import get_enhanced_user
 from app.schemas import DocumentResponse, SearchQuery, SearchResult
 from app.services.embbedings import Collection
 from app.utils import process_document
@@ -13,7 +14,6 @@ from app.utils import process_document
 _metadata_adapter = TypeAdapter(list[dict[str, Any]])
 
 router = APIRouter()
-user = "default_user"
 
 
 @router.post("/{collection_id}", response_model=dict[str, Any])
@@ -21,6 +21,7 @@ async def documents_create(
     collection_id: UUID,
     files: list[UploadFile] = File(...),
     metadatas_json: str | None = Form(None),
+    user: dict = Depends(get_enhanced_user),
 ):
     if not metadatas_json:
         metadatas: list[dict] | list[None] = [None] * len(files)
@@ -64,7 +65,7 @@ async def documents_create(
     try:
         collection = Collection(
             collection_id=str(collection_id),
-            user_id=user,
+            user_id=user["sub"],
         )
         added_ids = await collection.upsert(docs_to_index)
         if not added_ids:
@@ -103,10 +104,11 @@ async def documents_list(
     collection_id: UUID,
     limit: int = Query(10, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    user: dict = Depends(get_enhanced_user),
 ):
     collection = Collection(
         collection_id=str(collection_id),
-        user_id=user,
+        user_id=user["sub"],
     )
     return await collection.list(limit=limit, offset=offset)
 
@@ -118,10 +120,11 @@ async def documents_list(
 async def documents_delete(
     collection_id: UUID,
     document_id: str,
+    user: dict = Depends(get_enhanced_user),
 ):
     collection = Collection(
         collection_id=str(collection_id),
-        user_id=user,
+        user_id=user["sub"],
     )
 
     success = await collection.delete(file_id=document_id)
@@ -135,13 +138,14 @@ async def documents_delete(
 async def documents_search(
     collection_id: UUID,
     search_query: SearchQuery,
+    user: dict = Depends(get_enhanced_user),
 ):
     if not search_query.query:
         raise HTTPException(status_code=400, detail="Search query cannot be empty")
 
     collection = Collection(
         collection_id=str(collection_id),
-        user_id=user,
+        user_id=user["sub"],
     )
 
     results = await collection.search(

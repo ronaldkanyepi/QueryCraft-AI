@@ -1,13 +1,12 @@
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.core.auth import get_enhanced_user
 from app.schemas import CollectionCreate, CollectionResponse, CollectionUpdate
 from app.services.embbedings import CollectionsManager
 
 router = APIRouter()
-
-user = "default_user"
 
 
 @router.post(
@@ -17,8 +16,9 @@ user = "default_user"
 )
 async def collections_create(
     collection_data: CollectionCreate,
+    user: dict = Depends(get_enhanced_user),
 ):
-    collection_info = await CollectionsManager(user).create(
+    collection_info = await CollectionsManager(user["sub"]).create(
         collection_data.name, collection_data.metadata
     )
     if not collection_info:
@@ -27,13 +27,18 @@ async def collections_create(
 
 
 @router.get("", response_model=list[CollectionResponse])
-async def collections_list(user: str = "default_user"):
-    return [CollectionResponse(**c) for c in await CollectionsManager(user).list()]
+async def collections_list(
+    user: dict = Depends(get_enhanced_user),
+):
+    return [CollectionResponse(**c) for c in await CollectionsManager(user["sub"]).list()]
 
 
 @router.get("/{collection_id}", response_model=CollectionResponse)
-async def collections_get(collection_id: UUID):
-    collection = await CollectionsManager(user).get(str(collection_id))
+async def collections_get(
+    collection_id: UUID,
+    user: dict = Depends(get_enhanced_user),
+):
+    collection = await CollectionsManager(user["sub"]).get(str(collection_id))
     if not collection:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -43,14 +48,21 @@ async def collections_get(collection_id: UUID):
 
 
 @router.delete("/{collection_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def collections_delete(collection_id: UUID):
-    await CollectionsManager(user).delete(str(collection_id))
+async def collections_delete(
+    collection_id: UUID,
+    user: dict = Depends(get_enhanced_user),
+):
+    await CollectionsManager(user["sub"]).delete(str(collection_id))
     return "Collection deleted successfully."
 
 
 @router.patch("/{collection_id}", response_model=CollectionResponse)
-async def collections_update(collection_id: UUID, collection_data: CollectionUpdate):
-    updated_collection = await CollectionsManager(user).update(
+async def collections_update(
+    collection_id: UUID,
+    collection_data: CollectionUpdate,
+    user: dict = Depends(get_enhanced_user),
+):
+    updated_collection = await CollectionsManager(user["sub"]).update(
         str(collection_id),
         name=collection_data.name,
         metadata=collection_data.metadata,

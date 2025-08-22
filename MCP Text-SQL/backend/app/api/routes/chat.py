@@ -21,7 +21,7 @@ async def chat(
     user: dict = Depends(get_enhanced_user),
 ):
     logger.info(f"Received request: {input}")
-    logger.info(f"Additional info: {user['additional_info']}")
+    logger.info(f"User info: {user}")
 
     config = RunnableConfig(configurable={"thread_id": input.thread_id})
     return StreamingResponse(
