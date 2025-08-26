@@ -359,43 +359,22 @@ async def execute_sql_node(state: AgentState, config: RunnableConfig) -> dict:
         }
 
     sample_data = data[:5]  # Show more sample rows
-    columns = list(data[0].keys()) if data else []
-    total_rows = len(data)
+    list(data[0].keys()) if data else []
+    len(data)
     summary_prompt = f"""
-       You are a senior data analyst providing insights from a SQL query. Analyze ONLY what is directly observable in the data provided. Do not make assumptions, inferences, or state facts not present in the actual data.
+        Dataset: {len(sample_data)} records
 
-       SQL Query Executed:
-       {generated_sql}
+        {json.dumps(sample_data[:3], indent=2, default=str)}
 
-       Dataset Overview:
-       - Total records found: {total_rows}
-       - Columns analyzed: {", ".join(columns)}
+        Analyze as a senior data analyst would:
+        • **Executive Summary**: What's the story this data tells?
+        • **Data Integrity**: Quality issues, edge cases, completeness
+        • **Statistical Insights**: Distributions, correlations, variance patterns
+        • **Business Implications**: What decisions could this data inform?
+        • **Red Flags**: Potential data issues or surprising findings
 
-       Sample Data (first 5 rows):
-       {json.dumps(sample_data, indent=2, default=str)}
-
-       CRITICAL RULES:
-       - Only describe what you can directly observe in the provided data
-       - Do not make business assumptions or inferences beyond what the data shows
-       - Do not assume what columns represent unless explicitly clear
-       - Do not suggest business implications unless directly supported by the data
-       - Use qualifying language like "the data shows", "based on these results", "from what is visible"
-       - If you cannot determine something from the data, explicitly state that limitation
-
-       Provide a professional data analysis that includes:
-
-       1. **Data Summary**: Describe exactly what the query returned - number of records, column structure, data types observed
-
-       2. **Observable Patterns**: Only describe patterns, distributions, or trends that are directly visible in the sample data
-
-       3. **Data Characteristics**: Note any observable characteristics like null values, data formats, value ranges, or duplicates visible in the sample
-
-       4. **Limitations**: Explicitly mention what cannot be determined from this sample (e.g., "Full data distribution cannot be assessed from this sample", "Column meanings are not specified")
-
-       5. **Factual Observations**: Only state facts that are directly verifiable from the provided data
-
-       Be precise, factual, and avoid speculation. If something is unclear or not determinable from the data provided, say so explicitly.
-       """
+        Be precise, factual, and avoid speculation. If something is unclear or not determinable from the data provided, say so explicitly. Provide sharp, analytical insights with appropriate confidence levels.
+        """
 
     summary_messages = [SystemMessage(content=summary_prompt)]
     summary_response = await llm.ainvoke(summary_messages)

@@ -1,0 +1,260 @@
+services:
+  postgres:
+    image: docker.io/postgres:${POSTGRES_VERSION:-latest}
+    container_name: postgres
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d zitadel_db -U postgres" ]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres # CHANGEME
+      POSTGRES_DB: postgres
+    networks:
+      - my_network
+    ports:
+      - 5432:5432
+    volumes:
+      - langfuse_postgres_data:/var/lib/postgresql/data
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
+
+  langfuse-worker:
+    image: docker.io/langfuse/langfuse-worker:3
+    container_name: langfuse-worker
+    restart: always
+    depends_on: &langfuse-depends-on
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    ports:
+      - 3030:3030
+    networks:
+      - my_network
+    environment: &langfuse-worker-env
+      NEXTAUTH_URL: http://localhost:3001
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/langfuse_db # CHANGEME
+      SALT: "mysalt" # CHANGEME
+      ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000" # CHANGEME: generate via `openssl rand -hex 32`
+      TELEMETRY_ENABLED: ${TELEMETRY_ENABLED:-true}
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: ${LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES:-true}
+      CLICKHOUSE_MIGRATION_URL: ${CLICKHOUSE_MIGRATION_URL:-clickhouse://clickhouse:9000}
+      CLICKHOUSE_URL: ${CLICKHOUSE_URL:-http://clickhouse:8123}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-clickhouse}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-clickhouse} # CHANGEME
+      CLICKHOUSE_CLUSTER_ENABLED: ${CLICKHOUSE_CLUSTER_ENABLED:-false}
+      LANGFUSE_USE_AZURE_BLOB: ${LANGFUSE_USE_AZURE_BLOB:-false}
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: ${LANGFUSE_S3_EVENT_UPLOAD_BUCKET:-langfuse}
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: ${LANGFUSE_S3_EVENT_UPLOAD_REGION:-auto}
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: ${LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID:-minio}
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY:-miniosecret} # CHANGEME
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: ${LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT:-http://minio:9000}
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: ${LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE:-true}
+      LANGFUSE_S3_EVENT_UPLOAD_PREFIX: ${LANGFUSE_S3_EVENT_UPLOAD_PREFIX:-events/}
+      LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: ${LANGFUSE_S3_MEDIA_UPLOAD_BUCKET:-langfuse}
+      LANGFUSE_S3_MEDIA_UPLOAD_REGION: ${LANGFUSE_S3_MEDIA_UPLOAD_REGION:-auto}
+      LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: ${LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID:-minio}
+      LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY:-miniosecret} # CHANGEME
+      LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: ${LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT:-http://localhost:9090}
+      LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: ${LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE:-true}
+      LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: ${LANGFUSE_S3_MEDIA_UPLOAD_PREFIX:-media/}
+      LANGFUSE_S3_BATCH_EXPORT_ENABLED: ${LANGFUSE_S3_BATCH_EXPORT_ENABLED:-false}
+      LANGFUSE_S3_BATCH_EXPORT_BUCKET: ${LANGFUSE_S3_BATCH_EXPORT_BUCKET:-langfuse}
+      LANGFUSE_S3_BATCH_EXPORT_PREFIX: ${LANGFUSE_S3_BATCH_EXPORT_PREFIX:-exports/}
+      LANGFUSE_S3_BATCH_EXPORT_REGION: ${LANGFUSE_S3_BATCH_EXPORT_REGION:-auto}
+      LANGFUSE_S3_BATCH_EXPORT_ENDPOINT: ${LANGFUSE_S3_BATCH_EXPORT_ENDPOINT:-http://minio:9000}
+      LANGFUSE_S3_BATCH_EXPORT_EXTERNAL_ENDPOINT: ${LANGFUSE_S3_BATCH_EXPORT_EXTERNAL_ENDPOINT:-http://localhost:9090}
+      LANGFUSE_S3_BATCH_EXPORT_ACCESS_KEY_ID: ${LANGFUSE_S3_BATCH_EXPORT_ACCESS_KEY_ID:-minio}
+      LANGFUSE_S3_BATCH_EXPORT_SECRET_ACCESS_KEY: ${LANGFUSE_S3_BATCH_EXPORT_SECRET_ACCESS_KEY:-miniosecret} # CHANGEME
+      LANGFUSE_S3_BATCH_EXPORT_FORCE_PATH_STYLE: ${LANGFUSE_S3_BATCH_EXPORT_FORCE_PATH_STYLE:-true}
+      LANGFUSE_INGESTION_QUEUE_DELAY_MS: ${LANGFUSE_INGESTION_QUEUE_DELAY_MS:-}
+      LANGFUSE_INGESTION_CLICKHOUSE_WRITE_INTERVAL_MS: ${LANGFUSE_INGESTION_CLICKHOUSE_WRITE_INTERVAL_MS:-}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_AUTH: ${REDIS_AUTH:-myredissecret} # CHANGEME
+      REDIS_TLS_ENABLED: ${REDIS_TLS_ENABLED:-false}
+      REDIS_TLS_CA: ${REDIS_TLS_CA:-/certs/ca.crt}
+      REDIS_TLS_CERT: ${REDIS_TLS_CERT:-/certs/redis.crt}
+      REDIS_TLS_KEY: ${REDIS_TLS_KEY:-/certs/redis.key}
+      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:-}
+      SMTP_CONNECTION_URL: ${SMTP_CONNECTION_URL:-}
+
+  langfuse-web:
+    image: docker.io/langfuse/langfuse:3
+    container_name: langfuse-web
+    restart: always
+    depends_on: *langfuse-depends-on
+    ports:
+      - 3001:3000
+    networks:
+      - my_network
+    environment:
+      <<: *langfuse-worker-env
+      NEXTAUTH_SECRET: mysecret # CHANGEME
+      LANGFUSE_INIT_ORG_ID: ${LANGFUSE_INIT_ORG_ID:-}
+      LANGFUSE_INIT_ORG_NAME: ${LANGFUSE_INIT_ORG_NAME:-}
+      LANGFUSE_INIT_PROJECT_ID: ${LANGFUSE_INIT_PROJECT_ID:-}
+      LANGFUSE_INIT_PROJECT_NAME: ${LANGFUSE_INIT_PROJECT_NAME:-}
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY:-}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY:-}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_USER_EMAIL:-}
+      LANGFUSE_INIT_USER_NAME: ${LANGFUSE_INIT_USER_NAME:-}
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD:-}
+
+  clickhouse:
+    image: docker.io/clickhouse/clickhouse-server
+    container_name: clickhouse
+    restart: always
+    user: "101:101"
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: clickhouse # CHANGEME
+    volumes:
+      - langfuse_clickhouse_data:/var/lib/clickhouse
+      - langfuse_clickhouse_logs:/var/log/clickhouse-server
+    ports:
+      - 127.0.0.1:8123:8123
+      - 127.0.0.1:9000:9000
+    networks:
+      - my_network
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 1s
+
+  minio:
+    image: docker.io/minio/minio
+    container_name: minio
+    restart: always
+    entrypoint: sh
+    command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: miniosecret # CHANGEME
+    ports:
+      - 9090:9000
+      - 127.0.0.1:9091:9001
+    volumes:
+      - langfuse_minio_data:/data
+    networks:
+      - my_network
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 1s
+      timeout: 5s
+      retries: 5
+      start_period: 1s
+
+  redis:
+    image: docker.io/redis:7
+    container_name: redis
+    restart: always
+    command: >
+      --requirepass ${REDIS_AUTH:-myredissecret}
+    ports:
+      - 6379:6379
+    networks:
+      - my_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 10s
+      retries: 10
+
+  zitadel:
+    restart: unless-stopped
+    image: ghcr.io/zitadel/zitadel:latest
+    container_name: zitadel
+    command: start-from-init --masterkey "MasterkeyNeedsToHave32Characters"
+    environment:
+      ZITADEL_EXTERNALSECURE: "false"
+      ZITADEL_TLS_ENABLED: "false"
+      ZITADEL_DATABASE_POSTGRES_HOST: postgres
+      ZITADEL_DATABASE_POSTGRES_PORT: 5432
+      ZITADEL_DATABASE_POSTGRES_DATABASE: ${DB_NAME}
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: ${DB_USER}
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: ${DB_PASSWORD}
+      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: ${DB_ADMIN_USER}
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: ${DB_ADMIN_PASSWORD}
+      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+
+      # Login client PAT
+      ZITADEL_FIRSTINSTANCE_LOGINCLIENTPATPATH: /current-dir/login-client.pat
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORDCHANGEREQUIRED: "false"
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_USERNAME: login-client
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_NAME: Automatically Initialized IAM_LOGIN_CLIENT
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_PAT_EXPIRATIONDATE: '2029-01-01T00:00:00Z'
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED: "true"
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_BASEURI: ${ZITADEL_LOGIN_V2_BASE_URI}
+      ZITADEL_OIDC_DEFAULTLOGINURLV2: ${ZITADEL_OIDC_DEFAULT_LOGIN}
+      ZITADEL_OIDC_DEFAULTLOGOUTURLV2: ${ZITADEL_OIDC_DEFAULT_LOGOUT}
+      ZITADEL_SAML_DEFAULTLOGINURLV2: ${ZITADEL_SAML_DEFAULT_LOGIN}
+
+      # Admin PAT
+      ZITADEL_FIRSTINSTANCE_PATPATH: /current-dir/admin.pat
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_USERNAME: admin
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_NAME: Automatically Initialized IAM_OWNER
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINEKEY_TYPE: 1
+
+    healthcheck:
+      test:
+        - CMD
+        - /app/zitadel
+        - ready
+      interval: 10s
+      timeout: 60s
+      retries: 5
+      start_period: 10s
+    user: "0"
+    volumes:
+      - .:/current-dir:delegated
+    ports:
+      - 8080:8080
+      - 3000:3000
+    networks:
+      - my_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  login:
+    restart: unless-stopped
+    container_name: zitadel_login
+    image: ghcr.io/zitadel/zitadel-login:latest
+    environment:
+      - ZITADEL_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_BASE_PATH=/ui/v2/login
+      - ZITADEL_SERVICE_USER_TOKEN_FILE=/current-dir/login-client.pat
+    network_mode: service:zitadel
+    user: "${UID:-1000}"
+    volumes:
+      - .:/current-dir:ro
+    depends_on:
+      zitadel:
+        condition: service_healthy
+
+
+networks:
+  my_network:
+
+volumes:
+  langfuse_postgres_data:
+    driver: local
+  langfuse_clickhouse_data:
+    driver: local
+  langfuse_clickhouse_logs:
+    driver: local
+  langfuse_minio_data:
+    driver: local
+  data:
+    driver: local

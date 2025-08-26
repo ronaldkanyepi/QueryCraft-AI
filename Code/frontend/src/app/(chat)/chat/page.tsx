@@ -375,20 +375,24 @@ export default function IntegratedAIChat() {
                     )}
 
                     {message.sql && (
-                        <Card>
-                            <CardContent className="p-4">
+                          <div>
                                 <div className="mb-2 flex items-center gap-2">
                                     <Database className="h-4 w-4" />
                                     <h3 className="font-semibold">Generated SQL Query</h3>
                                 </div>
-                                <CodeBlock data={[{ language: 'sql', code: message.sql, filename: 'query.sql' }]} defaultValue="sql">
+                                <CodeBlock data={[{ language: 'sql', filename: 'query.sql', code: message.sql }]} defaultValue="sql">
                                     <CodeBlockHeader>
-                                        <CodeBlockFiles>{(item) => <CodeBlockFilename>{item.filename}</CodeBlockFilename>}</CodeBlockFiles>
+                                        <CodeBlockFilename value="sql">query.sql</CodeBlockFilename>
                                     </CodeBlockHeader>
-                                    <CodeBlockBody>{(item) => <CodeBlockItem value={item.code}><CodeBlockContent>{item.code}</CodeBlockContent></CodeBlockItem>}</CodeBlockBody>
+                                    <CodeBlockBody>
+                                        {(item) => (
+                                            <CodeBlockItem value={item.language}>
+                                                <CodeBlockContent language="sql">{item.code}</CodeBlockContent>
+                                            </CodeBlockItem>
+                                        )}
+                                    </CodeBlockBody>
                                 </CodeBlock>
-                            </CardContent>
-                        </Card>
+                          </div>
                     )}
 
                     {hasResults && (
