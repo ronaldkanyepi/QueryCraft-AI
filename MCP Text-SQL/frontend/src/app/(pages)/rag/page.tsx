@@ -48,7 +48,6 @@ export default function SettingsPage() {
     const [viewingDoc, setViewingDoc] = useState<DocumentResponse | null>(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // Search modal states
     const [showSearchModal, setShowSearchModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -74,7 +73,6 @@ export default function SettingsPage() {
         }
     };
 
-    // Search functionality
     const handleSearch = async () => {
         if (!searchQuery.trim() || !selectedCollection) {
             toast.error("Please enter a search query.");
@@ -83,8 +81,7 @@ export default function SettingsPage() {
 
         setIsSearching(true);
         try {
-
-            const results = await apiClient.searchDocuments(selectedCollection.uuid, searchQuery, searchLimit);
+            const results = await apiClient.searchDocuments(selectedCollection.uuid, searchQuery, searchLimit) as unknown as SearchResult[];
             setSearchResults(results);
 
             if (results.length === 0) {
@@ -120,7 +117,7 @@ export default function SettingsPage() {
     };
 
     const formatScore = (score: number) => {
-        return (1 - score).toFixed(3); // Convert distance to similarity score
+        return (1 - score).toFixed(3);
     };
 
     useEffect(() => {
@@ -213,7 +210,6 @@ export default function SettingsPage() {
             await refreshDocumentsAndCount();
             resetCustomMetadata();
 
-            // Re-initialize with owner_id for next upload
             if (session?.user?.id) {
                 setMetadataFields([{
                     key: 'owner_id',
@@ -384,7 +380,7 @@ export default function SettingsPage() {
     const customMetadataCount = metadataFields.filter(f => !f.readonly && f.key.trim() && f.value.trim()).length;
 
     return (
-        <div className="flex h-screen bg-background text-foreground overflow-hidden">
+        <div className="flex h-full bg-background text-foreground overflow-hidden">
             {isMobileMenuOpen && (
                 <div
                     className="fixed inset-0 bg-black/50 z-40 md:hidden"
@@ -520,7 +516,7 @@ export default function SettingsPage() {
                 </ScrollArea>
             </div>
 
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <div className="flex-1 flex flex-col min-w-0">
                 <div className="p-2 sm:p-4 border-b flex-shrink-0">
                     <div className="flex items-center gap-2 sm:gap-4">
                         <Button
@@ -541,7 +537,6 @@ export default function SettingsPage() {
                             </p>
                         </div>
 
-                        {/* Search Button */}
                         {selectedCollection && (
                             <Button
                                 size="sm"
@@ -554,7 +549,6 @@ export default function SettingsPage() {
                             </Button>
                         )}
 
-                        {/* Metadata Status Indicator */}
                         {customMetadataCount > 0 && (
                             <Badge variant="outline" className="hidden sm:flex items-center gap-1">
                                 <Settings className="h-3 w-3"/>
@@ -564,15 +558,15 @@ export default function SettingsPage() {
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-hidden flex flex-col">
-                    <div className="p-2 sm:p-4 flex-1 flex flex-col min-h-0">
+                <div className="flex-1 flex flex-col min-h-0">
+                    <div className="p-2 sm:p-4 flex-1 flex flex-col overflow-y-auto">
 
                         <Card className="border-dashed border-2 hover:border-primary/50 transition-colors flex-shrink-0">
-                            <CardContent className="p-2 sm:p-4">
+                            <CardContent className="p-1 sm:p-2">
                                 <div className="text-center">
-                                    <Upload className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground mx-auto mb-2"/>
+                                    <Upload className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mx-auto mb-1"/>
                                     <h3 className="text-xs sm:text-sm font-semibold mb-1">Upload Files or Add Text</h3>
-                                    <p className="text-muted-foreground text-[10px] sm:text-xs mb-3">Drag and drop files or click a
+                                    <p className="text-muted-foreground text-[10px] sm:text-xs mb-2">Drag and drop files or click a
                                         button below</p>
                                     <input
                                         ref={fileInputRef}
@@ -583,7 +577,7 @@ export default function SettingsPage() {
                                         id="file-upload"
                                         disabled={isUploading || !selectedCollection}
                                     />
-                                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                                    <div className="flex flex-col sm:flex-row gap-1 justify-center">
                                         <Button size="sm" asChild disabled={isUploading || !selectedCollection} className="text-xs">
                                             <label htmlFor="file-upload" className="cursor-pointer">
                                                 {isUploading ? 'Processing...' : 'Select Files'}
@@ -647,7 +641,7 @@ export default function SettingsPage() {
 
                         <Separator className="my-4 flex-shrink-0"/>
 
-                        <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
+                        <div className="flex flex-col min-h-0 flex-1">
                             <div className="flex items-center justify-between mb-3 flex-shrink-0">
                                 <h3 className="text-sm sm:text-base font-semibold">Documents</h3>
                                 <Badge variant="secondary" className="text-xs">
@@ -661,7 +655,7 @@ export default function SettingsPage() {
                                     <Spinner className="h-6 w-6"/>
                                 </div>
                             ) : (
-                                <div className="flex-1 overflow-auto">
+                                <div className="min-h-0 flex-1">
                                     <DataTable
                                         columns={documentColumns}
                                         data={documents}
@@ -679,7 +673,6 @@ export default function SettingsPage() {
 
             <ControllableAlertDialog ref={confirmationDialogRef}/>
 
-            {/* Search Modal */}
             <Dialog open={showSearchModal} onOpenChange={setShowSearchModal}>
                 <DialogContent className="w-full max-w-[95vw] sm:max-w-4xl h-[85vh] sm:h-[80vh] flex flex-col mx-2 sm:mx-auto">
                     <DialogHeader>
@@ -693,7 +686,6 @@ export default function SettingsPage() {
                     </DialogHeader>
 
                     <div className="space-y-4">
-                        {/* Search Input */}
                         <div className="flex gap-2">
                             <Input
                                 placeholder="Enter your search query..."
@@ -738,7 +730,6 @@ export default function SettingsPage() {
                         </div>
                     </div>
 
-                    {/* Search Results */}
                     <div className="flex-1 min-h-0">
                         {searchResults.length > 0 ? (
                             <ScrollArea className="h-full">
@@ -746,19 +737,18 @@ export default function SettingsPage() {
                                     <div className="text-sm text-muted-foreground mb-4">
                                         Found {searchResults.length} results for `{searchQuery}`
                                     </div>
-                                    {searchResults.map((result, index) => (
+                                    {searchResults.map((result) => (
                                         <Card key={result.id} className="border hover:shadow-md transition-shadow">
                                             <CardHeader className="pb-2">
                                                 <div className="flex items-center justify-between">
                                                     <CardTitle className="text-base flex items-center gap-2">
-                                                        <FileText className="h-4 w-4"/>
-                                                        {result.metadata?.file_name || `Document ${result.id.slice(0, 8)}...`}
+                                                        <FileText className="h-5 w-4"/>
+                                                        {`Document ${result.id.slice(0, 15)}...`}
                                                     </CardTitle>
                                                     <Badge variant="secondary" className="text-xs">
                                                         Score: {formatScore(result.score)}
                                                     </Badge>
                                                 </div>
-                                                {/* Metadata Display */}
                                                 {Object.keys(result.metadata).length > 0 && (
                                                     <div className="flex flex-wrap gap-1 mt-2">
                                                         {Object.entries(result.metadata).map(([key, value]) => (
@@ -790,8 +780,7 @@ export default function SettingsPage() {
                                                             const mockDoc: DocumentResponse = {
                                                                 id: result.id,
                                                                 content: result.page_content,
-                                                                metadata: result.metadata,
-                                                                updated_at: ''
+                                                                metadata: result.metadata
                                                             };
                                                             setViewingDoc(mockDoc);
                                                             setShowSearchModal(false);
@@ -838,7 +827,6 @@ export default function SettingsPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Metadata Modal */}
             <Dialog open={showMetadataModal} onOpenChange={setShowMetadataModal}>
                 <DialogContent className="w-full max-w-[95vw] sm:max-w-lg mx-2 sm:mx-auto">
                     <DialogHeader>
@@ -924,7 +912,6 @@ export default function SettingsPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Document Viewer Modal */}
             <Dialog open={!!viewingDoc} onOpenChange={(isOpen) => !isOpen && setViewingDoc(null)}>
                 <DialogContent className="w-full max-w-[95vw] sm:max-w-4xl h-[85vh] sm:h-[80vh] flex flex-col mx-2 sm:mx-auto">
                     <DialogHeader>

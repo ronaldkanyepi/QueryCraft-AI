@@ -1,7 +1,7 @@
 import builtins
 import json
 import uuid
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from fastapi import status
 from fastapi.exceptions import HTTPException
@@ -337,3 +337,9 @@ class Collection:
             }
             for doc, score in results
         ]
+
+    async def search_min(self, query: str, *, limit: int = 4) -> List[str]:
+        details = await self._get_details_or_raise()
+        store = get_vectorstore(collection_name=details["table_id"])
+        results = store.similarity_search_with_score(query, k=limit)
+        return [doc.page_content for doc, score in results]

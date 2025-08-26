@@ -1,16 +1,26 @@
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Annotated, Any, Dict, List, Optional, TypedDict
+
+from langchain_core.messages import BaseMessage
+from langgraph.graph import add_messages
 
 
 class AgentState(TypedDict, total=False):
-    messages: List[Any]
+    messages: Annotated[List[BaseMessage], add_messages]
     decision: Optional[str]
     clarification_count: Optional[int]
-    final_message: Optional[str]
-    message_type: Optional[str]
-    sql_query: Optional[str]
-    query_results: Optional[List[Any]]
-    analysis_summary: Optional[str]
-    reasoning_steps: Optional[List[str]]
-    tools_used: Optional[List[Dict]]
-    memory_context: Optional[Dict]
-    extracted_memories: Optional[List]
+    retry_count: Optional[int]
+
+    user_id: str
+    thread_id: str
+    memory_agent: Optional[Any]
+
+    generated_sql: Optional[str]
+    valid_sql: Optional[Dict[str, Any]]
+    tables_used: Optional[List[str]]
+    query_type: Optional[str]
+    error_message: Optional[str]
+
+    # Memory context
+    user_context: Optional[Dict[str, Any]]
+    recent_episodes: Optional[List[Dict[str, Any]]]
+    sql_patterns: Optional[List[Dict[str, Any]]]

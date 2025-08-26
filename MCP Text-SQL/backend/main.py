@@ -9,13 +9,12 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.agent.graph import builder
 from app.api.routes import router
+from app.core.app_state import app_state
 from app.core.auth import zitadel_auth
 from app.core.config import StartupChecker, settings
 from app.core.memory import init_memory
 from app.core.rate_limiter import limiter, rate_limit_exceeded_handler
-from app.schemas.app import AppState
-
-app_state = AppState()
+from app.services.memory import MemoryTools
 
 
 @asynccontextmanager
@@ -26,8 +25,15 @@ async def lifespan(_: FastAPI) -> AsyncGenerator:
     async with init_memory() as memory:
         app_state.checkpointer = memory["checkpointer"]
         app_state.store = memory["store"]
-        app_state.reflection_executor = memory["reflection_executor"]
+        app_state.main_reflection_executor = memory["main_reflection_executor"]
+        app_state.profile_reflection_executor = memory["profile_reflection_executor"]
         app_state.graph = builder(checkpointer=app_state.checkpointer, store=app_state.store)
+        app_state.memory_tools = MemoryTools(
+            store=memory["store"],
+            profile_reflection_executor=memory["profile_reflection_executor"],
+            main_reflection_executor=memory["main_reflection_executor"],
+        )
+
         yield
 
 

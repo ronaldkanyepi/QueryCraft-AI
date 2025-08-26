@@ -61,7 +61,7 @@ export const columns: ColumnDef<DocumentResponse>[] = [
             const id = row.original.id || "";
             return (
                 <div className="font-medium">
-                    {id}
+                    {id.slice(0, 8)}
                 </div>
             );
         },
@@ -79,21 +79,21 @@ export const columns: ColumnDef<DocumentResponse>[] = [
             );
         },
     },
-    {
-        accessorKey: "metadata.creator",
-        header: "Source",
-        cell: ({ row }) => {
-            const creator = row.original.metadata?.creator;
-            const producer = row.original.metadata?.producer;
-            const source = (creator && creator.length > 3) ? creator : producer;
-            return (
-                <div className="flex items-center space-x-2">
-                    <Bot className="h-4 w-4 text-muted-foreground flex-shrink-0"/>
-                    <span className="truncate">{source || 'Text'}</span>
-                </div>
-            )
-        },
-    },
+    // {
+    //     accessorKey: "metadata.creator",
+    //     header: "Source",
+    //     cell: ({ row }) => {
+    //         const creator = row.original.metadata?.creator;
+    //         const producer = row.original.metadata?.producer;
+    //         const source = (creator && creator.length > 3) ? creator : producer;
+    //         return (
+    //             <div className="flex items-center space-x-2">
+    //                 <Bot className="h-4 w-4 text-muted-foreground flex-shrink-0"/>
+    //                 <span className="truncate">{source || 'Text'}</span>
+    //             </div>
+    //         )
+    //     },
+    // },
     {
         id: "characterCount",
         header: () => <div className="text-right">Characters</div>,

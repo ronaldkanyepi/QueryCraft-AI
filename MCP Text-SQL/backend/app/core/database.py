@@ -24,6 +24,8 @@ async def get_db_pool() -> asyncpg.Pool:
             host=settings.DB_HOST,
             port=settings.DB_PORT,
             database=settings.DB_NAME,
+            min_size=1,
+            max_size=20,
         )
         logger.info("Database connection pool created using parsed URL components.")
     return _pool

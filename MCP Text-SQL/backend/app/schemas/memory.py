@@ -19,6 +19,9 @@ class QueryEpisode(BaseModel):
 class UserProfile(BaseModel):
     """User preferences and domain knowledge: semantic memory"""
 
+    name: Optional[str] = Field(default=None, description="User's name")
+    organization: Optional[str] = Field(default=None, description="User's Organization")
+    department: Optional[str] = Field(default=None, description="User's Department")
     preferred_response_style: str = Field(
         default="conversational", description="How user likes responses"
     )

@@ -81,7 +81,9 @@ type ChatMessage = {
     reasoning?: string;
     tools?: ToolCall[];
     sql?: string;
-    results?: any[];
+    results?: unknown[];
+    summary?: string; // Add explicit summary field
+    isJsonResponse?: boolean; // Flag to identify JSON responses
 };
 
 type ToolCall = {
@@ -95,13 +97,35 @@ type ToolCall = {
     executionTime?: number;
 };
 
+// Helper function to parse agent JSON response
+const parseAgentResponse = (content: string) => {
+    try {
+        const parsed = JSON.parse(content);
+        if (parsed && typeof parsed === 'object' && parsed.sql && parsed.data && parsed.summary) {
+            return {
+                isJsonResponse: true,
+                sql: parsed.sql,
+                data: Array.isArray(parsed.data) ? parsed.data : [],
+                summary: parsed.summary
+            };
+        }
+    } catch (error) {
+        // Not JSON or invalid format - treat as regular text
+    }
+    return {
+        isJsonResponse: false,
+        sql: null,
+        data: [],
+        summary: content
+    };
+};
+
 export default function IntegratedAIChat() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [text, setText] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { data: session, status } = useSession();
-
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -110,9 +134,6 @@ export default function IntegratedAIChat() {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
-
-
-
 
     const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
         event.preventDefault();
@@ -142,16 +163,13 @@ export default function IntegratedAIChat() {
         };
         setMessages((prev) => [...prev, initialAssistantMessage]);
 
-
         try {
-
             const payload: ChatApiPayload = {
                 messages: [currentText],
                 thread_id: uuidv4(),
-                user_id: session?.user?.id|| 'default_user',
+                user_id: session?.user?.id || 'default_user',
                 session_id: session?.user?.id || 'fallback'
             };
-
 
             const response = await apiClient.streamChatMessage(payload);
             const reader = response.body!.getReader();
@@ -191,7 +209,6 @@ export default function IntegratedAIChat() {
 
                                             const isTool = eventData.stage.includes('sql') || eventData.stage.includes('query');
 
-                                            //select the tools I want to display using the shadcn.io AI tool display or else every node I display as a text in the reasoning step
                                             if (isTool) {
                                                 updatedMsg.tools?.push({
                                                     name: eventData.stage,
@@ -200,7 +217,6 @@ export default function IntegratedAIChat() {
                                                     startTime: Date.now(),
                                                 });
                                             }
-
 
                                             const newReasoningStep = `\n\nStarting : **${eventData.stage}**...`;
                                             updatedMsg.reasoning = (updatedMsg.reasoning || '') + newReasoningStep;
@@ -220,33 +236,49 @@ export default function IntegratedAIChat() {
                                                     tool.executionTime = Date.now() - tool.startTime;
                                                 }
 
-                                                updatedMsg.sql = tool.parameters?.query as string || JSON.stringify(tool.parameters, null, 2);
-                                                try {
-                                                    updatedMsg.results = typeof tool.result === 'string' ? JSON.parse(tool.result) : tool.result;
-                                                } catch {
-                                                    updatedMsg.results = [];
+
+                                                if (!updatedMsg.sql) {
+                                                    updatedMsg.sql = tool.parameters?.query as string || JSON.stringify(tool.parameters, null, 2);
+                                                }
+                                                if (!updatedMsg.results || updatedMsg.results.length === 0) {
+                                                    try {
+                                                        updatedMsg.results = typeof tool.result === 'string' ? JSON.parse(tool.result) : tool.result;
+                                                    } catch {
+                                                        updatedMsg.results = [];
+                                                    }
                                                 }
                                             }
-
 
                                             const completionStep = `\n\nCompleted : **${eventData.stage}**`;
                                             updatedMsg.reasoning = (updatedMsg.reasoning || '') + completionStep;
 
-                                           //This code is necessary to know that I have reached my final node
+                                            // Handle final agent completion with JSON parsing
                                             if (eventData.stage === 'Text-to-SQL Agent') {
                                                 updatedMsg.status = 'Finished';
                                                 updatedMsg.reasoning += `\n\n\n **All processing complete now returning the user output!**`;
 
                                                 const finalState = eventData.result;
                                                 if (finalState?.messages?.length > 0) {
-                                                    // This is the final output from my text-to-sql agent
-                                                    updatedMsg.content = finalState.messages[finalState.messages.length - 1].content;
+                                                    const finalContent = finalState.messages[finalState.messages.length - 1].content;
+
+                                                    // Parse the agent's JSON response
+                                                    const parsedResponse = parseAgentResponse(finalContent);
+
+                                                    updatedMsg.isJsonResponse = parsedResponse.isJsonResponse;
+                                                    updatedMsg.content = finalContent; // Keep original for debugging
+                                                    updatedMsg.summary = parsedResponse.summary;
+
+                                                    if (parsedResponse.isJsonResponse) {
+                                                        updatedMsg.sql = parsedResponse.sql;
+                                                        updatedMsg.results = parsedResponse.data;
+                                                    }
                                                 }
-                                                // Handle other fields if available
-                                                if (finalState?.sql_query) {
+
+                                                // Handle other fields if available (backward compatibility)
+                                                if (finalState?.sql_query && !updatedMsg.sql) {
                                                     updatedMsg.sql = finalState.sql_query;
                                                 }
-                                                if (finalState?.results) {
+                                                if (finalState?.results && (!updatedMsg.results || updatedMsg.results.length === 0)) {
                                                     updatedMsg.results = finalState.results;
                                                 }
                                             }
@@ -353,7 +385,7 @@ export default function IntegratedAIChat() {
                                     <CodeBlockHeader>
                                         <CodeBlockFiles>{(item) => <CodeBlockFilename>{item.filename}</CodeBlockFilename>}</CodeBlockFiles>
                                     </CodeBlockHeader>
-                                    <CodeBlockBody>{(item) => <CodeBlockItem><CodeBlockContent>{item.code}</CodeBlockContent></CodeBlockItem>}</CodeBlockBody>
+                                    <CodeBlockBody>{(item) => <CodeBlockItem value={item.code}><CodeBlockContent>{item.code}</CodeBlockContent></CodeBlockItem>}</CodeBlockBody>
                                 </CodeBlock>
                             </CardContent>
                         </Card>
@@ -364,19 +396,25 @@ export default function IntegratedAIChat() {
                             <CardContent className="p-4">
                                 <div className="mb-4 flex items-center gap-2">
                                     <BarChart3 className="h-4 w-4" />
-                                    <h3 className="font-semibold">Query Results</h3>
+                                    <h3 className="font-semibold">Query Results ({message.results!.length} rows)</h3>
                                 </div>
                                 <div className="max-h-80 overflow-y-auto rounded-md border">
                                     <Table>
                                         <TableHeader>
-                                            <TableRow>{keyNames.map(key => <TableHead key={key}>{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</TableHead>)}</TableRow>
+                                            <TableRow>
+                                                {keyNames.map(key => (
+                                                    <TableHead key={key}>
+                                                        {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                    </TableHead>
+                                                ))}
+                                            </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {message.results!.map((row: any, idx: number) => (
                                                 <TableRow key={idx}>
                                                     {keyNames.map((key, i) => (
                                                         <TableCell key={i}>
-                                                            {key === 'revenue' ? `$${Number(row[key]).toLocaleString()}` : String(row[key])}
+                                                            {key === 'revenue' ? `$${Number(row[key]).toLocaleString()}` : String(row[key] ?? '')}
                                                         </TableCell>
                                                     ))}
                                                 </TableRow>
@@ -410,17 +448,31 @@ export default function IntegratedAIChat() {
                         </Card>
                     )}
 
-                    {message.content && (
+
+                    {message.summary && (
                         <AIMessageContent>
                             <div className="mb-4 flex items-center gap-2">
                                 <LucideBotMessageSquare className="h-4 w-4" />
-                                <h3 className="font-semibold">Summary</h3>
+                                <h3 className="font-semibold">Data Analysis</h3>
+                            </div>
+                            <AIResponse>{message.summary}</AIResponse>
+                        </AIMessageContent>
+                    )}
+
+                    {/* Fallback for non-JSON responses */}
+                    {!message.summary && message.content && (
+                        <AIMessageContent>
+                            <div className="mb-4 flex items-center gap-2">
+                                <LucideBotMessageSquare className="h-4 w-4" />
+                                <h3 className="font-semibold">Response</h3>
                             </div>
                             <AIResponse>{message.content}</AIResponse>
                         </AIMessageContent>
                     )}
 
-                    {isStreamingNow && message.status && <div className="mt-2 text-sm text-muted-foreground">{message.status}</div>}
+                    {isStreamingNow && message.status && (
+                        <div className="mt-2 text-sm text-muted-foreground">{message.status}</div>
+                    )}
                 </div>
             </AIMessage>
         );

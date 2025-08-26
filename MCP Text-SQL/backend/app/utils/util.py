@@ -1,8 +1,11 @@
 import json
+import re
 
+import yaml
 from langchain_core.messages import BaseMessage, HumanMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
+from app.core.app_state import app_state
 from app.core.config import settings
 
 
@@ -35,10 +38,21 @@ class Util:
         return resources[0].data
 
     @staticmethod
+    def clean_page_content_string(text: str) -> str:
+        cleaned_text = text.replace("\\n", "\n")
+        cleaned_text = cleaned_text.replace("\\\n", "")
+        lines = [re.sub(r"\s+", " ", line).strip() for line in cleaned_text.split("\n")]
+        return "\n".join(lines)
+
+    @staticmethod
+    def format_to_yaml(data, default_text: str) -> str:
+        if not data:
+            return default_text
+        return yaml.dump(data, sort_keys=False, default_flow_style=False, indent=2).strip()
+
+    @staticmethod
     async def stream_generator(input_messages: list, config: dict):
         """Yields server-sent events for each step of the graph's execution."""
-        from main import app_state
-
         messages_as_objects = [HumanMessage(content=msg) for msg in input_messages]
         nodes_to_monitor = ["Text-to-SQL Agent", "triage", "llm_stream"]
         async for event in app_state.graph.astream_events(

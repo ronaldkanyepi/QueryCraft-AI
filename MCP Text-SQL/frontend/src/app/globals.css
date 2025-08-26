@@ -129,3 +129,20 @@
     @apply bg-background text-foreground;
   }
 }
+
+.datatable-mobile-pagination [data-table-pagination] {
+    display: block !important;
+}
+
+
+.datatable-mobile-pagination .hidden {
+    display: block !important;
+}
+
+.datatable-mobile-pagination [class*="sm:flex"] {
+    display: flex !important;
+}
+
+.datatable-mobile-pagination [class*="md:block"] {
+    display: block !important;
+}

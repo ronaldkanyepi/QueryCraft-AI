@@ -32,9 +32,8 @@ class MCPTools:
         try:
             engine = MCPResources.get_engine()
             with engine.connect() as connection:
-                if query.strip().upper().startswith("SELECT"):
-                    explain_query = f"EXPLAIN {query}"
-                    connection.execute(text(explain_query))
+                explain_query = f"EXPLAIN {query}"
+                connection.execute(text(explain_query))
 
                 return {"valid": True, "query": query, "message": "SQL syntax is valid"}
 

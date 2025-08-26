@@ -5,12 +5,10 @@ import {MessageSquare} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Toaster} from "@/components/ui/sonner";
 
-
 export default function Layout({children}: { children: React.ReactNode }) {
     return (
-        <div className="flex flex-col h-screen bg-background">
-
-            <header className="flex items-center justify-between p-4 border-b shrink-0 bg-background z-10">
+        <div className="h-screen bg-background grid grid-rows-[auto_1fr]">
+            <header className="flex items-center justify-between p-4 border-b bg-background z-10 flex-shrink-0">
                 <Link href="/chat">
                     <Button variant="outline" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                         <MessageSquare className="h-4 w-4"/>
@@ -23,8 +21,7 @@ export default function Layout({children}: { children: React.ReactNode }) {
                 </div>
             </header>
 
-
-            <main className="flex-1 overflow-hidden">
+            <main className="min-h-0 flex-1">
                 {children}
             </main>
 

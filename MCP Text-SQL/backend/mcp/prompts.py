@@ -12,9 +12,9 @@ class MCPPrompts:
                     Analyze the user's query and determine their intent. Classify into one of these categories:
 
                     1. **explore** - User wants to understand the data structure or browse data
-                    2. **sql** - User wants to query data but doesn't mention visualization
+                    2. **sql**   - User wants to query data but doesn't mention visualization
                     3. **chart** - User wants to create visualizations (may need data first)
-                    4. **both** - User explicitly wants both data query and visualization
+                    4. **both**  - User explicitly wants both data query and visualization
 
                     User Query: "{user_query}"
 

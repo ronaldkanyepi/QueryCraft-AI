@@ -5,4 +5,5 @@
   "graphs": {
     "the_analyst": "app.agent.graph:get_in_memory_graph"
   }
+
 }

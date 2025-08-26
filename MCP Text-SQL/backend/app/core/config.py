@@ -88,6 +88,7 @@ class Settings(BaseSettings):
     # === Model ====
     LLM_API_KEY: str = "sk-...."  # pragma: allowlist secret
     LLM_MODEL_NAME: str = "gpt-4o"
+    LLM_EMBEDDING_MODEL: str = "text-embedding-3-small"
     LLM_TEMPERATURE: float = 0.1
 
     # === Redis ===
@@ -137,7 +138,7 @@ class Settings(BaseSettings):
     @property
     def DEFAULT_EMBEDDINGS(self) -> Embeddings:
         if self.APP_ENVIRONMENT == "production":
-            return OpenAIEmbeddings(api_key=self.OPENAI_API_KEY, model=self.OPENAI_MODEL_NAME)
+            return OpenAIEmbeddings(api_key=self.LLM_API_KEY, model=self.LLM_EMBEDDING_MODEL)
         return DeterministicFakeEmbedding(size=1536)
 
     model_config = {"env_file": env_path, "case_sensitive": True}

@@ -23,7 +23,7 @@ async def chat(
     logger.info(f"Received request: {input}")
     logger.info(f"User info: {user}")
 
-    config = RunnableConfig(configurable={"thread_id": input.thread_id})
+    config = RunnableConfig(configurable={"thread_id": input.thread_id, "user_id": user["sub"]})
     return StreamingResponse(
         Util.stream_generator(input.messages, config),
         media_type="text/event-stream",
