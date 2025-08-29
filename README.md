@@ -179,118 +179,143 @@ sequenceDiagram
 ### Text-to-SQL Agent Data Flow
 
 ```mermaid
-graph TD
+graph LR
+    %% ===================== Groups =====================
     subgraph Frontend_NextJS
-        A[Next.js UI]
+        FE[Next.js UI]
     end
 
     subgraph Security_Services
-        M(Zitadel)
+        Z[Zitadel]
     end
 
     subgraph Backend_Python_FastAPI
-        B(FastAPI Backend)
-        C{API Router}
+        API[FastAPI Backend]
+        RT{API Router}
+        D[RAG Endpoints & Checkpoints]
     end
 
     subgraph LangGraph_Agent_Logic
-        F(LangGraph Agent)
+        AG[LangGraph Agent]
         subgraph Internal_Nodes
-            G[Triage Node]
-            H[Clarification Node]
-            I[Generate SQL Node]
-            K[Execute SQL & Analyze Node]
-            L[Follow-up & Modification Nodes]
+            TRI[Triage Node]
+            CL[Clarification Node]
+            GEN[Generate SQL Node]
+            VAL[Validate SQL Node]
+            RETRY[Retry Generate SQL <= 3]
+            EXEC[Execute SQL & Analyze Node]
+            OTH[Follow-up & Modification Nodes]
         end
     end
 
     subgraph System_Database
-        N(PostgreSQL Database)
+        PG[(PostgreSQL)]
         subgraph Long_Term_Memory
-            O_S[Semantic Memory Table]
-            O_P[Procedural Memory Table]
-            O_E[Episodic Memory Table]
+            SM[Semantic Memory]
+            PM[Procedural Memory]
+            EM[Episodic Memory]
         end
-        O[PGVector Index]
-        O_STM[Short-Term Memory Table]
+        STM[Short-Term Memory]
+        subgraph RAG_Store
+            EMB[Embeddings - docs/schema/examples]
+            IDX[pgvector index]
+        end
     end
 
     subgraph MCP_Server_AI_Tools
-        P(MCP Server)
-        Q[SQL Validation Tool]
-        R[SQL Execution Tool]
+        MCP[MCP Server]
+        VTool[SQL Validation Tool]
+        ETool[SQL Execution Tool]
     end
 
     subgraph Observability
-        S(Langfuse Logging & Tracing)
+        LF[Langfuse Logging & Tracing]
     end
 
+    %% ===================== Flows =====================
+    %% Auth + API
+    FE -->|OAuth 2.0| Z
+    FE -->|API calls| API
+    Z -->|Token validation| API
 
-    A -- OAuth 2.0 --> M
-    A -- API Calls --> B
-    M -- Token Validation --> B
+    API --> RT
+    RT -->|/chat| AG
+    RT -->|/rag/* upsert/search| D
 
-    B --> C
-    C -->|/chat| F
-    C -->|Other Routes| D[RAG Endpoints & Checkpoints]
+    %% Observability
+    AG -->|logs/traces| LF
 
-    F -- Logs & Traces --> S
-    F -- retrieves conversational context from --> O_STM
-    F -->|orchestrates| G
+    %% Agent orchestration
+    AG --> TRI
+    TRI -->|need clarification| CL
+    TRI -->|main logic| GEN
+    TRI -->|other intent| OTH
+    CL -->|re-triage| TRI
 
-    G -->|if needs clarification| H
-    G -->|if main logic| I
-    G -->|if other intent| L
+    %% ----- Retrieval: memory & RAG -----
+    STM --> AG
+    SM --> GEN
+    PM --> GEN
+    EM --> GEN
+    IDX --> GEN
+    IDX --> CL
 
-    H -->|re-triage| G
+    %% ----- RAG ingestion & index -----
+    D -- upsert --> EMB
+    EMB -- indexed by --> IDX
 
-    I -- retrieves general knowledge from --> O_S
-    I -- retrieves schema & patterns from --> O_P
-    I -- retrieves history from --> O_E
-    I -->|generated query| P
+    %% ----- SQL via MCP -----
+    GEN -->|generated SQL| MCP
+    MCP -->|validate| VTool
+    VTool -->|valid| ETool
+    VTool -->|invalid| RETRY
+    RETRY --> GEN
 
-    O_S -- connected to --> O
-    O_P -- connected to --> O
-    O_E -- connected to --> O
-    O_STM -- connected to --> O
+    ETool -->|executes on| PG
+    ETool -->|rows| EXEC
 
-    P -->|sends query for validation| Q
-    Q -->|if valid| R
-    Q -->|if invalid| I
+    %% Respond + Memory updates
+    EXEC -->|analyze & respond| AG
+    AG -->|update| STM
+    AG -->|update| SM
+    AG -->|update| PM
+    AG -->|update| EM
 
-    R -->|executes on| N
-    R -->|returns results| K
+    EXEC -->|stream result| API
+    API --> FE
 
-    K -->|analyzes & responds| F
-    F -->|updates short-term memory| O_STM
-    F -->|updates long-term memory| O_E
+    OTH --> END
 
-    K -->|streams final response| B
-    B -->|displays response| A
-
-    L --> END
-
-    style A fill:#2E7D32,stroke:#333,stroke-width:2px,color:#fff
-    style B fill:#1565C0,stroke:#333,stroke-width:2px,color:#fff
-    style C fill:#1565C0,stroke:#333,stroke-width:2px,color:#fff
+    %% ===================== Styling =====================
+    style FE fill:#2E7D32,stroke:#333,stroke-width:2px,color:#fff
+    style API fill:#1565C0,stroke:#333,stroke-width:2px,color:#fff
+    style RT fill:#1565C0,stroke:#333,stroke-width:2px,color:#fff
     style D fill:#1565C0,stroke:#333,stroke-width:2px,color:#fff
-    style M fill:#FF8F00,stroke:#333,stroke-width:2px,color:#fff
-    style F fill:#6A1B9A,stroke:#333,stroke-width:2px,color:#fff
-    style G fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff
-    style H fill:#FFC107,stroke:#333,stroke-width:2px,color:#000
-    style I fill:#AB47BC,stroke:#333,stroke-width:2px,color:#fff
-    style K fill:#1E88E5,stroke:#333,stroke-width:2px,color:#fff
-    style L fill:#E53935,stroke:#333,stroke-width:2px,color:#fff
-    style N fill:#4E342E,stroke:#333,stroke-width:2px,color:#fff
-    style O fill:#FDD835,stroke:#333,stroke-width:2px,color:#000
-    style P fill:#7CB342,stroke:#333,stroke-width:2px,color:#fff
-    style Q fill:#9E9E9E,stroke:#333,stroke-width:2px,color:#fff
-    style R fill:#9E9E9E,stroke:#333,stroke-width:2px,color:#fff
-    style S fill:#4DD0E1,stroke:#333,stroke-width:2px,color:#000
-    style O_S fill:#FDD835,stroke:#333,stroke-width:2px,color:#000
-    style O_P fill:#FDD835,stroke:#333,stroke-width:2px,color:#000
-    style O_E fill:#FDD835,stroke:#333,stroke-width:2px,color:#000
-    style O_STM fill:#FDD835,stroke:#333,stroke-width:2px,color:#000
+    style Z fill:#FF8F00,stroke:#333,stroke-width:2px,color:#fff
+
+    style AG fill:#6A1B9A,stroke:#333,stroke-width:2px,color:#fff
+    style TRI fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff
+    style CL fill:#FFC107,stroke:#333,stroke-width:2px,color:#000
+    style GEN fill:#AB47BC,stroke:#333,stroke-width:2px,color:#fff
+    style VAL fill:#9E9E9E,stroke:#333,stroke-width:2px,color:#fff
+    style RETRY fill:#BDBDBD,stroke:#333,stroke-width:2px,color:#000
+    style EXEC fill:#1E88E5,stroke:#333,stroke-width:2px,color:#fff
+    style OTH fill:#E53935,stroke:#333,stroke-width:2px,color:#fff
+
+    style PG fill:#4E342E,stroke:#333,stroke-width:2px,color:#fff
+    style STM fill:#FDD835,stroke:#333,stroke-width:2px,color:#000
+    style SM fill:#FDD835,stroke:#333,stroke-width:2px,color:#000
+    style PM fill:#FDD835,stroke:#333,stroke-width:2px,color:#000
+    style EM fill:#FDD835,stroke:#333,stroke-width:2px,color:#000
+
+    style EMB fill:#FFF176,stroke:#333,stroke-width:2px,color:#000
+    style IDX fill:#FFD54F,stroke:#333,stroke-width:2px,color:#000
+
+    style MCP fill:#7CB342,stroke:#333,stroke-width:2px,color:#fff
+    style VTool fill:#9E9E9E,stroke:#333,stroke-width:2px,color:#fff
+    style ETool fill:#9E9E9E,stroke:#333,stroke-width:2px,color:#fff
+
+    style LF fill:#4DD0E1,stroke:#333,stroke-width:2px,color:#000
 
 ```
 
