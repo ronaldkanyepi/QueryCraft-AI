@@ -179,7 +179,7 @@ sequenceDiagram
 ### Text-to-SQL Agent Data Flow
 
 ```mermaid
-graph LR
+graph TD
     %% ===================== Groups =====================
     subgraph Frontend_NextJS
         FE[Next.js UI]
@@ -250,26 +250,25 @@ graph LR
     TRI -->|need clarification| CL
     TRI -->|main logic| GEN
     TRI -->|other intent| OTH
-    CL -->|re-triage| TRI
 
     %% ----- Retrieval: memory & RAG -----
-    STM --> AG
-    SM --> GEN
-    PM --> GEN
-    EM --> GEN
-    IDX --> GEN
-    IDX --> CL
+    AG --> STM
+    GEN --> SM
+    GEN --> PM
+    GEN --> EM
+    GEN --> IDX
+    CL --> IDX
 
     %% ----- RAG ingestion & index -----
     D -- upsert --> EMB
     EMB -- indexed by --> IDX
 
-    %% ----- SQL via MCP -----
-    GEN -->|generated SQL| MCP
-    MCP -->|validate| VTool
+    %% ----- LangGraph Logic -----
+    GEN -->|generated query| VAL
+    VAL -->|sends query for validation| VTool
     VTool -->|valid| ETool
     VTool -->|invalid| RETRY
-    RETRY --> GEN
+    RETRY -->|retry request| GEN
 
     ETool -->|executes on| PG
     ETool -->|rows| EXEC
@@ -281,9 +280,10 @@ graph LR
     AG -->|update| PM
     AG -->|update| EM
 
-    EXEC -->|stream result| API
+    AG -->|streams final response| API
     API --> FE
 
+    CL -->|re-triage| AG
     OTH --> END
 
     %% ===================== Styling =====================
@@ -316,7 +316,6 @@ graph LR
     style ETool fill:#9E9E9E,stroke:#333,stroke-width:2px,color:#fff
 
     style LF fill:#4DD0E1,stroke:#333,stroke-width:2px,color:#000
-
 ```
 
 * * * * *
