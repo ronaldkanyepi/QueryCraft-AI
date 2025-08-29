@@ -159,3 +159,14 @@ export default function SignInPage() {
   );
 }
 ```
+
+### Sample UI Images
+
+<div style="display:flex; flex-wrap: wrap; gap: 10px;">
+  <img src="public/img/screen_1.png" alt="Login Screen" width="200" />
+  <img src="public/img/screen_2.png" alt="Dashboard View" width="200" />
+  <img src="public/img/screen_3.png" alt="Query Builder" width="200" />
+  <img src="public/img/screen_4.png" alt="Analytics View" width="200" />
+  <img src="public/img/screen_5.png" alt="Settings Panel" width="200" />
+  <img src="public/img/screen_6.png" alt="Search Results" width="200" />
+</div>
