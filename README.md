@@ -199,7 +199,6 @@ graph TD
             G[Triage Node]
             H[Clarification Node]
             I[Generate SQL Node]
-            J[Retry SQL Node]
             V[Validate SQL Node]
             K[Execute SQL & Analyze Node]
             L[Follow-up & Modification Nodes]
