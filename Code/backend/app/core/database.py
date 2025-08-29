@@ -5,13 +5,19 @@ import asyncpg
 import sqlalchemy
 from langchain_core.embeddings import Embeddings
 from langchain_postgres.vectorstores import PGVector
-from loguru import logger
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.core.config import settings
+from app.core.logging import logger
 
 _pool: asyncpg.Pool | None = None
+
+SYSTEM_COLLECTIONS = [
+    {"name": "database_schema", "metadata": {"description": "Database schema reference"}},
+    {"name": "sql_queries", "metadata": {"description": "Few-shot SQL examples"}},
+]
+system_id = "root"
 
 
 async def get_db_pool() -> asyncpg.Pool:
@@ -25,7 +31,7 @@ async def get_db_pool() -> asyncpg.Pool:
             port=settings.DB_PORT,
             database=settings.DB_NAME,
             min_size=1,
-            max_size=20,
+            max_size=50,
         )
         logger.info("Database connection pool created using parsed URL components.")
     return _pool
@@ -77,3 +83,13 @@ def get_vectorstore(
         collection_metadata=collection_metadata,
     )
     return store
+
+
+async def create_system_collections():
+    from app.services.embbedings import CollectionsManager
+
+    existing = [c for c in await CollectionsManager(user_id=system_id).list()]
+    for c in SYSTEM_COLLECTIONS:
+        if not any(col["name"] == c["name"] for col in existing):
+            await CollectionsManager(user_id=system_id).create(c["name"], c["metadata"])
+            logger.info(f"Created System Collection: {c['name']}")

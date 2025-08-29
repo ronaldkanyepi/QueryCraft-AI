@@ -61,3 +61,7 @@ class Defaults:
     LANGSMITH_API_KEY = "lsv2_......"  # pragma: allowlist secret
     LANGSMITH_TRACING = "true"
     LANGSMITH_PROJECT = "text-to-sql-agent"
+
+    LANGFUSE_SECRET_KEY = "sk-lf-..." # pragma: allowlist secret
+    LANGFUSE_PUBLIC_KEY = "pk-lf-..." # pragma: allowlist secret
+    LANGFUSE_HOST = "https://cloud.langfuse.com"

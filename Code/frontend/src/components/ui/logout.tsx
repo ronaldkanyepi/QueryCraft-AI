@@ -38,7 +38,6 @@ import { formatRelative } from 'date-fns';
 export function UserDropdown() {
     const { data: session, status } = useSession();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
-
     const authTimestamp = session?.user?.auth_time;
     const lastLoggedIn = authTimestamp
         ? formatRelative(new Date(authTimestamp * 1000), new Date())
@@ -67,6 +66,7 @@ export function UserDropdown() {
     const handleSignOut = async () => {
         try {
             console.log("Starting logout process...");
+            sessionStorage.removeItem('wasAuthenticated');
             const idToken = session?.idToken;
             const issuer = process.env.NEXT_PUBLIC_ZITADEL_ISSUER;
             const redirectUri = window.location.origin;

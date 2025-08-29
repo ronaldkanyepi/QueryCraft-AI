@@ -2,9 +2,12 @@ import {SidebarInset, SidebarProvider, SidebarTrigger} from "@/components/ui/sid
 import { AppSidebar } from "@/components/ui/app-sidebar";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { UserDropdown } from "@/components/ui/logout";
-import { Toaster } from "@/components/ui/sonner";
+
+
+
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+
     return (
         <SidebarProvider>
             <AppSidebar />
@@ -21,7 +24,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     {children}
                 </main>
             </SidebarInset>
-            <Toaster position="bottom-right" richColors />
         </SidebarProvider>
     );
 }

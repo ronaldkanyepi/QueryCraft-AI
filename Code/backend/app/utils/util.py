@@ -7,6 +7,8 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 
 from app.core.app_state import app_state
 from app.core.config import settings
+from app.core.logging import logger
+from app.services.embbedings import Collection, CollectionsManager
 
 
 class Util:
@@ -34,8 +36,17 @@ class Util:
         """Get MCP server resource"""
         resources = await client.get_resources(server_name=server_name, uris=uri)
         if not resources:
-            raise ValueError(f"No resource data found for URI: {uri}")
+            logger.error(f"No resource data found for URI: {uri}")
         return resources[0].data
+
+    @staticmethod
+    async def get_root_collection_by_name(name: str, system_id: str) -> Collection:
+        manager = CollectionsManager(user_id=system_id)
+        collections = await manager.list()
+        col = next((c for c in collections if c["name"] == name), None)
+        if not col:
+            logger.error(f"System collection : '{name}' not found")
+        return Collection(collection_id=col["uuid"], user_id=system_id)
 
     @staticmethod
     def clean_page_content_string(text: str) -> str:
@@ -57,7 +68,14 @@ class Util:
         nodes_to_monitor = ["Text-to-SQL Agent", "triage", "llm_stream"]
         async for event in app_state.graph.astream_events(
             {"messages": messages_as_objects},
-            config=config,
+            config={
+                **config,
+                "callbacks": [app_state.langfuse_handler],
+                "metadata": {
+                    "langfuse_user_id": config["configurable"].get("user_id", "default"),
+                    "langfuse_session_id": config["configurable"].get("thread_id", "default"),
+                },
+            },
             version="v2",
             include_names=nodes_to_monitor,
         ):

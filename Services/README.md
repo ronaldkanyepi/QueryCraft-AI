@@ -631,3 +631,23 @@ User roles: {'admin': {...}}
 - **JWT Validation**: FastAPI validates signature using Zitadel's public keys
 
 This setup provides enterprise-grade authentication with proper separation of concerns and follows OAuth2/OIDC security best practices!
+
+Running the docker files
+--
+docker network create shared-net
+docker network inspect shared-net
+
+
+
+docker-compose -p zitadel -f docker-compose.zitadel.yaml up -d
+docker-compose -p zitadel -f docker-compose.zitadel.yaml down
+docker-compose -p langfuse -f docker-compose.langfuse.yaml up -d
+docker-compose -p langfuse -f docker-compose.langfuse.yaml down
+docker-compose -p app -f docker-compose.db.yaml up -d
+docker-compose -p app -f docker-compose.db.yaml down
+
+
+
+
+
+docker network inspect shared-net

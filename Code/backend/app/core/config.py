@@ -105,6 +105,10 @@ class Settings(BaseSettings):
     LANGSMITH_TRACING: bool = Defaults.LANGSMITH_TRACING
     LANGSMITH_PROJECT: str = Defaults.LANGSMITH_PROJECT
 
+    LANGFUSE_SECRET_KEY: str = Defaults.LANGFUSE_SECRET_KEY
+    LANGFUSE_PUBLIC_KEY: str = Defaults.LANGFUSE_PUBLIC_KEY
+    LANGFUSE_HOST: str = Defaults.LANGFUSE_HOST
+
     @property
     def docs_enabled(self) -> bool:
         return self.APP_ENVIRONMENT in ["local", "staging"]

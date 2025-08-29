@@ -11,6 +11,8 @@ from loguru import logger
 from app.core.database import get_db_connection, get_vectorstore
 from app.schemas.collection import CollectionDetails
 
+SYSTEM_OWNERS = {"system", "root"}
+
 
 class CollectionsManager:
     def __init__(self, user_id: str) -> None:
@@ -30,10 +32,11 @@ class CollectionsManager:
                 """
                 SELECT uuid, cmetadata
                 FROM langchain_pg_collection
-                WHERE cmetadata->>'owner_id' = $1
+                WHERE cmetadata->>'owner_id' = $1 OR cmetadata->>'owner_id' = ANY($2)
                 ORDER BY cmetadata->>'name';
                 """,
                 self.user_id,
+                list(SYSTEM_OWNERS),
             )
 
         result: list[CollectionDetails] = []
@@ -59,10 +62,11 @@ class CollectionsManager:
                 SELECT uuid, name, cmetadata
                   FROM langchain_pg_collection
                  WHERE uuid = $1
-                   AND cmetadata->>'owner_id' = $2;
+                   AND (cmetadata->>'owner_id' = $2 OR cmetadata->>'owner_id' = ANY($3));
                 """,
                 collection_id,
                 self.user_id,
+                list(SYSTEM_OWNERS),
             )
 
         if not rec:
@@ -118,6 +122,29 @@ class CollectionsManager:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Must update at least 1 attribute.",
+            )
+
+        async with get_db_connection() as conn:
+            collection = await conn.fetchrow(
+                """
+                SELECT cmetadata->>'owner_id' AS owner_id
+                FROM langchain_pg_collection
+                WHERE uuid = $1;
+                """,
+                collection_id,
+            )
+            if not collection:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Collection '{collection_id}' not found.",
+                )
+            collection_owner = collection["owner_id"]
+
+        # Block modification of system collections by non-system users
+        if collection_owner in SYSTEM_OWNERS and self.user_id not in SYSTEM_OWNERS:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Modification of system collections is not allowed.",
             )
 
         if metadata is not None:
@@ -191,6 +218,26 @@ class CollectionsManager:
         collection_id: str,
     ) -> int:
         async with get_db_connection() as conn:
+            collection = await conn.fetchrow(
+                """
+                SELECT cmetadata->>'owner_id' AS owner_id
+                FROM langchain_pg_collection
+                WHERE uuid = $1;
+                """,
+                collection_id,
+            )
+            if not collection:
+                return 0
+            collection_owner = collection["owner_id"]
+
+        # Block deletion of system collections by non-system users
+        if collection_owner in SYSTEM_OWNERS and self.user_id not in SYSTEM_OWNERS:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Deletion of system collections is not allowed.",
+            )
+
+        async with get_db_connection() as conn:
             result = await conn.execute(
                 """
                 DELETE FROM langchain_pg_collection
@@ -226,6 +273,26 @@ class Collection:
         file_id: Optional[str] = None,
     ) -> bool:
         async with get_db_connection() as conn:
+            collection_info = await conn.fetchrow(
+                """
+                SELECT lpc.cmetadata->>'owner_id' AS owner_id
+                FROM langchain_pg_collection AS lpc
+                WHERE lpc.uuid = $1;
+                """,
+                self.collection_id,
+            )
+
+            if not collection_info:
+                raise HTTPException(status_code=404, detail="Collection not found.")
+
+            collection_owner = collection_info["owner_id"]
+
+            if collection_owner in SYSTEM_OWNERS and self.user_id not in SYSTEM_OWNERS:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Deletion of files from system collections is not allowed.",
+                )
+
             delete_sql = """
                 DELETE FROM langchain_pg_embedding AS lpe
                 USING langchain_pg_collection AS lpc
@@ -262,7 +329,7 @@ class Collection:
                     JOIN langchain_pg_collection lpc
                       ON lpe.collection_id = lpc.uuid
                    WHERE lpc.uuid = $1
-                     AND lpc.cmetadata->>'owner_id' = $2
+                     AND (lpc.cmetadata->>'owner_id' = $2 OR lpc.cmetadata->>'owner_id' = ANY($3))
                      AND lpe.cmetadata->>'file_id' IS NOT NULL
                    ORDER BY lpe.cmetadata->>'file_id', lpe.id
                 )
@@ -273,11 +340,12 @@ class Collection:
                 JOIN UniqueFileChunks AS ufc
                   ON emb.id = ufc.id
                 ORDER BY ufc.file_id
-                LIMIT  $3
-                OFFSET $4
+                LIMIT  $4
+                OFFSET $5
                 """,
                 self.collection_id,
                 self.user_id,
+                list(SYSTEM_OWNERS),
                 limit,
                 offset,
             )
@@ -307,11 +375,12 @@ class Collection:
                   JOIN langchain_pg_collection c
                     ON e.collection_id = c.uuid
                  WHERE e.uuid = $1
-                   AND c.cmetadata->>'owner_id' = $2
-                   AND c.uuid = $3
+                   AND (c.cmetadata->>'owner_id' = $2 OR c.cmetadata->>'owner_id' = ANY($3))
+                   AND c.uuid = $4
                 """,
                 document_id,
                 self.user_id,
+                list(SYSTEM_OWNERS),
                 self.collection_id,
             )
         if not row:

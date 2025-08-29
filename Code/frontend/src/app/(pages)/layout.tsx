@@ -1,11 +1,24 @@
+"use client";
+
 import {ModeToggle} from "@/components/ui/mode-toggle";
 import {UserDropdown} from "@/components/ui/logout";
 import Link from "next/link";
 import {MessageSquare} from "lucide-react";
 import {Button} from "@/components/ui/button";
-import {Toaster} from "@/components/ui/sonner";
+import {useEffect} from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function Layout({children}: { children: React.ReactNode }) {
+    const { status } = useSession();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (status === "unauthenticated") {
+            router.push("/auth/signin");
+        }
+    }, [status, router]);
+
     return (
         <div className="h-screen bg-background grid grid-rows-[auto_1fr]">
             <header className="flex items-center justify-between p-4 border-b bg-background z-10 flex-shrink-0">
@@ -25,7 +38,6 @@ export default function Layout({children}: { children: React.ReactNode }) {
                 {children}
             </main>
 
-            <Toaster position="top-right" richColors/>
         </div>
     )
 }

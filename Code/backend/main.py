@@ -12,6 +12,8 @@ from app.api.routes import router
 from app.core.app_state import app_state
 from app.core.auth import zitadel_auth
 from app.core.config import StartupChecker, settings
+from app.core.database import create_system_collections
+from app.core.langfuse import init_langfuse
 from app.core.memory import init_memory
 from app.core.rate_limiter import limiter, rate_limit_exceeded_handler
 from app.services.memory import MemoryTools
@@ -22,6 +24,9 @@ async def lifespan(_: FastAPI) -> AsyncGenerator:
     checker = StartupChecker(settings)
     checker.run()
     await zitadel_auth.openid_config.load_config()
+    await create_system_collections()
+    client, app_state.langfuse_handler = init_langfuse()
+
     async with init_memory() as memory:
         app_state.checkpointer = memory["checkpointer"]
         app_state.store = memory["store"]

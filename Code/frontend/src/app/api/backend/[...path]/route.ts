@@ -36,6 +36,7 @@ async function handler(req: NextRequest) {
         headers.set("Authorization", `Bearer ${session.accessToken}`);
     }
 
+    // console.log("Session Access Token :",session?.accessToken)
 
     // if (session?.user) {
     //     // headers.set("X-User-ID", session.user?.id || '');

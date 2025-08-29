@@ -13,7 +13,6 @@ from app.core.app_state import app_state
 from app.core.config import settings
 from app.core.logging import logger
 from app.core.memory import init_in_memory_tools
-from app.services.embbedings import Collection
 from app.utils.util import Util
 
 console = Console()
@@ -136,11 +135,7 @@ def route_after_triage(state: AgentState):
 async def generate_sql_node(state: AgentState, config: RunnableConfig) -> dict:
     last_user_message = state["messages"][-1].content if state["messages"] else ""
 
-    schema_collection = Collection(
-        collection_id="70849634-6458-490b-adb7-4f1cb389cc93",
-        user_id="334438404911529987",
-    )
-
+    schema_collection = await Util.get_root_collection_by_name("database_schema", "root")
     response = await schema_collection.search_min(last_user_message, limit=2)
 
     if isinstance(response, list):
@@ -224,11 +219,7 @@ async def retry_generate_sql_node(state: AgentState, config: RunnableConfig) -> 
     validation_error = state.get("valid_sql", {}).get("error", "Unknown validation error")
     last_user_message = state["messages"][-1].content if state["messages"] else ""
 
-    schema_collection = Collection(
-        collection_id="70849634-6458-490b-adb7-4f1cb389cc93",
-        user_id="334438404911529987",
-    )
-
+    schema_collection = await Util.get_root_collection_by_name("database_schema", "root")
     response = await schema_collection.search_min(last_user_message, limit=2)
 
     if isinstance(response, list):

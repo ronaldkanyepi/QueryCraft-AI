@@ -47,6 +47,7 @@ export default function SettingsPage() {
     const [showAddText, setShowAddText] = useState(false);
     const [viewingDoc, setViewingDoc] = useState<DocumentResponse | null>(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isSystemCollection, setIsSystemCollection] = useState(false);
 
     const [showSearchModal, setShowSearchModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -265,6 +266,39 @@ export default function SettingsPage() {
         }
     }, []);
 
+    const refreshDocumentsAndCount = useCallback(async () => {
+        if (selectedCollection) {
+            await loadDocuments(selectedCollection.uuid);
+        }
+    }, [selectedCollection, loadDocuments]);
+
+    const handleDirectUpload = useCallback(async (uploadType: 'file' | 'text', content?: any) => {
+        if (!selectedCollection) return;
+        setIsUploading(true);
+        try {
+            if (uploadType === 'file' && content) {
+                const fd = new FormData();
+                Array.from(content).forEach((file: File) => fd.append("files", file));
+                await apiClient.createDocuments(selectedCollection.uuid, fd);
+                toast.success("Files uploaded successfully.");
+            } else if (uploadType === 'text' && content) {
+                const textBlob = new Blob([content], {type: "text/plain"});
+                const formData = new FormData();
+                formData.append("files", textBlob, `text-document-${Date.now()}.txt`);
+                await apiClient.createDocuments(selectedCollection.uuid, formData);
+                toast.success("Text document added successfully.");
+                setShowAddText(false);
+                setNewDocumentText('');
+            }
+            await refreshDocumentsAndCount();
+        } catch (err) {
+            handleError(err);
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    }, [selectedCollection, refreshDocumentsAndCount, handleError]);
+
     useEffect(() => {
         void loadCollections();
     }, [loadCollections]);
@@ -272,14 +306,10 @@ export default function SettingsPage() {
     useEffect(() => {
         if (selectedCollection) {
             void loadDocuments(selectedCollection.uuid);
+            setIsSystemCollection(selectedCollection.metadata?.owner_id === 'root');
         } else {
             setDocuments([]);
-        }
-    }, [selectedCollection, loadDocuments]);
-
-    const refreshDocumentsAndCount = useCallback(async () => {
-        if (selectedCollection) {
-            await loadDocuments(selectedCollection.uuid);
+            setIsSystemCollection(false);
         }
     }, [selectedCollection, loadDocuments]);
 
@@ -336,9 +366,13 @@ export default function SettingsPage() {
         const files = ev.target.files;
         if (!files || files.length === 0 || !selectedCollection) return;
 
-        setPendingUpload({ type: 'file', files });
-        setShowMetadataModal(true);
-    }, [selectedCollection]);
+        if (isSystemCollection) {
+            void handleDirectUpload('file', files);
+        } else {
+            setPendingUpload({ type: 'file', files });
+            setShowMetadataModal(true);
+        }
+    }, [selectedCollection, isSystemCollection, handleDirectUpload]);
 
     const handleAddTextClick = useCallback(() => {
         if (!newDocumentText.trim() || !selectedCollection) {
@@ -346,9 +380,13 @@ export default function SettingsPage() {
             return;
         }
 
-        setPendingUpload({ type: 'text', textContent: newDocumentText });
-        setShowMetadataModal(true);
-    }, [newDocumentText, selectedCollection]);
+        if (isSystemCollection) {
+            void handleDirectUpload('text', newDocumentText);
+        } else {
+            setPendingUpload({ type: 'text', textContent: newDocumentText });
+            setShowMetadataModal(true);
+        }
+    }, [newDocumentText, selectedCollection, isSystemCollection, handleDirectUpload]);
 
     const handleDeleteDocument = useCallback(async (doc: DocumentResponse) =>  {
         const isConfirmed = await confirmationDialogRef.current?.confirm({
@@ -578,16 +616,50 @@ export default function SettingsPage() {
                                         disabled={isUploading || !selectedCollection}
                                     />
                                     <div className="flex flex-col sm:flex-row gap-1 justify-center">
-                                        <Button size="sm" asChild disabled={isUploading || !selectedCollection} className="text-xs">
-                                            <label htmlFor="file-upload" className="cursor-pointer">
-                                                {isUploading ? 'Processing...' : 'Select Files'}
-                                            </label>
-                                        </Button>
-                                        <Button size="sm" variant="outline" onClick={() => setShowAddText(true)}
-                                                disabled={!selectedCollection} className="text-xs">
-                                            <FileText className="h-3 w-3 mr-1"/>
-                                            Add Text
-                                        </Button>
+                                        {isSystemCollection ? (
+                                            <>
+                                                <Button
+                                                    size="sm"
+                                                    asChild
+                                                    disabled={isUploading || !selectedCollection}
+                                                    className="text-xs"
+                                                >
+                                                    <label htmlFor="file-upload" className="cursor-pointer">
+                                                        <Upload className="h-3 w-3 mr-1"/>
+                                                        Upload Files
+                                                    </label>
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        if (newDocumentText.trim()) {
+                                                            void handleDirectUpload('text', newDocumentText);
+                                                        } else {
+                                                            setShowAddText(p => !p);
+                                                        }
+                                                    }}
+                                                    disabled={!selectedCollection}
+                                                    className="text-xs"
+                                                >
+                                                    <FileText className="h-3 w-3 mr-1"/>
+                                                    Add Text
+                                                </Button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Button size="sm" asChild disabled={isUploading || !selectedCollection} className="text-xs">
+                                                    <label htmlFor="file-upload" className="cursor-pointer">
+                                                        {isUploading ? 'Processing...' : 'Select Files'}
+                                                    </label>
+                                                </Button>
+                                                <Button size="sm" variant="outline" onClick={() => setShowAddText(true)}
+                                                        disabled={!selectedCollection} className="text-xs">
+                                                    <FileText className="h-3 w-3 mr-1"/>
+                                                    Add Text
+                                                </Button>
+                                            </>
+                                        )}
                                         {selectedCollection && (
                                             <Button
                                                 size="sm"

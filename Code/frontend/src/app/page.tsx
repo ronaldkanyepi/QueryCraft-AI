@@ -11,14 +11,14 @@ export default function Home() {
     const { data: session, status } = useSession();
     const router = useRouter();
 
-    // Redirect to /chat if user is signed in
+
     useEffect(() => {
         if (status !== "loading" && session) {
             router.push("/chat");
         }
     }, [session, status, router]);
 
-    // Show loading while checking session or redirecting
+
     if (status === "loading" || session) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -33,11 +33,11 @@ export default function Home() {
     }
 
     const handleSignIn = () => {
-        signIn("zitadel"); // Specify your Zitadel provider
+        signIn("zitadel");
     };
 
     const handleGetStarted = () => {
-        signIn("zitadel"); // Redirect to sign in since user is not authenticated
+        signIn("zitadel");
     };
 
     return (

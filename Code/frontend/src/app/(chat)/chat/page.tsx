@@ -71,6 +71,7 @@ import {
 import { ChatApiPayload } from '@/lib/types';
 import { apiClient } from '@/lib/apiClient';
 import { useSession, signOut } from "next-auth/react";
+import {useRouter} from "next/navigation";
 
 type ChatMessage = {
     id: string;
@@ -126,6 +127,7 @@ export default function IntegratedAIChat() {
     const [isStreaming, setIsStreaming] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { data: session, status } = useSession();
+
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
