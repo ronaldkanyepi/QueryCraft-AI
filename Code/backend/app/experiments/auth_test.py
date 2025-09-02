@@ -16,5 +16,5 @@ async def fetch_userinfo(access_token: str):
 
 
 if __name__ == "__main__":
-    access_token = "..." #`pragma: allowlist secret`
+    access_token = "..."  # `pragma: allowlist secret`
     asyncio.run(fetch_userinfo(access_token))
