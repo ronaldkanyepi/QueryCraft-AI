@@ -9,4 +9,6 @@ df = pd.read_csv(r'tst.csv')
 
 token = "24425637849930303455"
 
-chatvx = "hsgsgggs"
+password = "24425637849930303455"
+
+chasfghh = "hsgsgggs"
