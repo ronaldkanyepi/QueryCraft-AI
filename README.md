@@ -7,20 +7,9 @@ Think of it as your personal data analyst. You simply ask a question in plain En
 Ultimately, this platform is designed to make work easier and organizations smarter. It helps you:
 
 * **Automate** complex tasks, so you can go from question to insight quickly.
-* **Access** data directly, without rely### QueryCraft AI
-
-QueryCraft AI is a powerful tool that helps everyone, even those without technical expertise, get the data they need from complex databases. It solves a common business problem: getting stuck when you can't write code to find the answers you're looking for.
-
-Think of it as your personal data analyst. You simply ask a question in plain English, such as "How many new customers did we get last week?" and the platform handles the rest. It uses AI to convert your question into a precise database query, runs the query, interprets the results, and provides a clear summary with visuals.
-
-Ultimately, this platform is designed to make work easier and organizations smarter. It helps you:
-
-* **Automate** complex tasks, so you can go from question to insight quickly.
 * **Access** data directly, without relying on a technical team.
 * **Boost efficiency** by reducing the time and effort spent on data analysis.
 * **Build a data-driven culture** by making information accessible to everyone.
-
-
 ---
 
 ## 2. Technical Architecture
