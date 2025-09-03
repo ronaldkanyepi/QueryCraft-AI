@@ -1,3 +1,6 @@
+from pathlib import Path
+
+
 class Defaults:
     AUTHOR = "Ronald N. Kanyepi"
     VERSION = "0.0.1"
@@ -8,18 +11,18 @@ class Defaults:
     APP_DESCRIPTION = "This is the description of my application"
     APP_ENVIRONMENT = "local"
     APP_HOST = "127.0.0.1"
-    APP_PORT = 8000
+    APP_PORT = 8005
 
     # === Frontend Host ===
     APP_FRONTEND_HOST = "http://localhost:3000"
 
     # === Database ======
-    DB_TYPE = "mysql"
+    DB_TYPE = "postgresql"
     DB_HOST = "localhost"
-    DB_PORT = 3306
-    DB_NAME = "project"
-    DB_USER = "user"
-    DB_PASSWORD = ""
+    DB_PORT = 5432
+    DB_NAME = "postgres"
+    DB_USER = "postgres"
+    DB_PASSWORD = "postgres" #pragma: allowlist secret
 
     # =======Model======
     LLM_API_KEY = "sk-...."  # pragma: allowlist secret
@@ -33,7 +36,7 @@ class Defaults:
     ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 8  # 8 days
     CLIENT_ID = ""
     PROJECT_ID = ""
-    ISSUER_URL = ""
+    ISSUER_URL = "http://localhost:8000"
 
     # === API ===
     API_V1_STR = "/api/v1"
@@ -44,7 +47,7 @@ class Defaults:
 
     # === Logging ===
     LOG_LEVEL = "INFO"
-    LOG_DIR = "logs"
+    LOG_DIR = Path(__file__).resolve().parent.parent.parent / "logs"
     LOG_JSON = False
     LOG_TO_FILE = True
 

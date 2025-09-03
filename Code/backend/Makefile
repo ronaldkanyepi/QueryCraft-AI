@@ -74,7 +74,7 @@ format: ## Format code using ruff
 	uv run ruff format app/
 
 lint: ## Lint and type-check code with ruff
-	uv run ruff check --fix app/
+	uv run ruff check . --fix app/
 
 
 # ==============================================================================

@@ -13,6 +13,7 @@ from app.core.app_state import app_state
 from app.core.config import settings
 from app.core.logging import logger
 from app.core.memory import init_in_memory_tools
+from app.services.memory import MemoryTools
 from app.utils.util import Util
 
 console = Console()
@@ -20,7 +21,6 @@ console = Console()
 client = Util.get_mcp_client()
 os.environ["OPENAI_API_KEY"] = settings.LLM_API_KEY
 llm = init_chat_model(settings.LLM_MODEL_NAME)
-
 
 async def triage_node(state: AgentState) -> dict:
     system_prompt = await Util.get_formatted_prompt(
@@ -192,9 +192,9 @@ async def generate_sql_node(state: AgentState, config: RunnableConfig) -> dict:
     prompt_messages = [SystemMessage(content=sql_generation_prompt)]
     sql_response = await llm.ainvoke(prompt_messages)
     generated_sql = sql_response.content.strip()
+    app_state.memory_tools.save_semantic_memory(content={"messages": state['messages']}, config=config)
+    app_state.memory_tools.save_episodic_memory(content={"messages": state['messages']}, config=config)
 
-    # memory_tools.save_semantic_memory(content={"messages": state['messages']}, config=config)
-    # memory_tools.save_episodic_memory(content={"messages": state['messages']}, config=config)
     state["generated_sql"] = generated_sql
     print(generated_sql)
     return {**state, "messages": [AIMessage(content=generated_sql)]}
