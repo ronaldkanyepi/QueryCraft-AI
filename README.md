@@ -193,9 +193,6 @@ sequenceDiagram
 4\. Core Features & Endpoints
 -----------------------------
 
-4. Core Features & Endpoints
------------------------------
-
 - `GET /health`: Application health check (public, no auth required)
 
 - `POST /chat`: Main endpoint for Text-to-SQL agent (requires Zitadel OAuth 2.0)
